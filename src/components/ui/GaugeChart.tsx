@@ -27,7 +27,7 @@ export const GaugeChart = ({
         <svg
           width={size}
           height={size / 2 + 10}
-          className="transform -rotate-0"
+          className="transform rotate-0"
         >
           {/* Background arc */}
           <path
