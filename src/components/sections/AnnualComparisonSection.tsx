@@ -17,8 +17,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   Legend,
   AreaChart,
   Area,
@@ -384,7 +382,6 @@ export const AnnualComparisonSection = () => {
           {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map((quarter, idx) => {
             const val2024 = quarterlyData['2024'][quarter];
             const val2025 = quarterlyData['2025'][quarter];
-            const diff = val2025 - val2024;
             const growth = val2024 > 0 ? ((val2025 - val2024) / val2024 * 100).toFixed(1) : '0';
             const quarterLabels = ['Ene-Mar', 'Abr-Jun', 'Jul-Sep', 'Oct-Dic'];
             
