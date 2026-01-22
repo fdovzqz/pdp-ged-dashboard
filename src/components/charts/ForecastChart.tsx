@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart,
@@ -25,7 +25,7 @@ interface ForecastChartProps {
   onToggleYear: (year: YearType) => void;
 }
 
-export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, onToggleYear }: ForecastChartProps) => {
+export const ForecastChart = memo(function ForecastChart({ activeForecast, onToggleForecast, activeYears, onToggleYear }: ForecastChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
   const forecastData = useMemo(() => generateForecast(), []);
   const forecastTotals = useMemo(() => calculateForecastTotals(forecastData), [forecastData]);
@@ -67,7 +67,7 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
       transition={{ duration: 0.6, delay: 0.4 }}
       className="bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
             <Target size={20} className="text-amber-500" />
@@ -78,37 +78,37 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* View Mode Toggle */}
           <div className="flex rounded-xl overflow-hidden border border-slate-600">
             <button
               onClick={() => setViewMode('daily')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                 viewMode === 'daily'
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
               }`}
             >
               <BarChart2 size={14} />
-              Diario
+              <span className="hidden xs:inline">Diario</span>
             </button>
             <button
               onClick={() => setViewMode('accumulated')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                 viewMode === 'accumulated'
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
               }`}
             >
               <TrendingUp size={14} />
-              Acumulado
+              <span className="hidden xs:inline">Acumulado</span>
             </button>
           </div>
 
-          <div className="w-px h-6 bg-slate-600" />
+          <div className="hidden sm:block w-px h-6 bg-slate-600" />
 
           {/* Year toggles */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {(['2024', '2025'] as YearType[]).map((year) => (
               <YearBadge
                 key={year}
@@ -120,10 +120,10 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
             ))}
           </div>
           
-          <div className="w-px h-6 bg-slate-600" />
+          <div className="hidden sm:block w-px h-6 bg-slate-600" />
           
           {/* Forecast toggles */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {(Object.keys(FORECAST_COLORS) as ForecastType[]).map((type) => (
               <ForecastBadge
                 key={type}
@@ -352,4 +352,4 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
       </div>
     </motion.div>
   );
-};
+});

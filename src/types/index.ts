@@ -73,7 +73,6 @@ export interface KPICardProps {
   trend?: 'up' | 'down';
   trendValue?: string;
   accent?: boolean;
-  delay?: number;
 }
 
 export interface YearBadgeProps {

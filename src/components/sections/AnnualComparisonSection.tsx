@@ -37,7 +37,7 @@ import {
 type ViewMode = 'monthly' | 'accumulated';
 
 export const AnnualComparisonSection = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
+  const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
   // Preparar datos para gráficos
   const chartData = useMemo(() => {
@@ -114,7 +114,7 @@ export const AnnualComparisonSection = () => {
       className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-6">
         <div className="flex items-center gap-2">
           <BarChart3 size={20} className="text-violet-400" />
           <h3 className="text-xl font-bold text-white font-display">
@@ -319,9 +319,9 @@ export const AnnualComparisonSection = () => {
       </div>
 
       {/* Monthly Details Table */}
-      <div className="bg-slate-700/30 rounded-xl p-4 mb-6">
-        <h4 className="text-sm font-semibold text-white mb-4">Detalle Mensual</h4>
-        <div className="overflow-x-auto">
+      <div className="bg-slate-700/30 rounded-xl p-3 sm:p-4 mb-6 -mx-2 sm:mx-0">
+        <h4 className="text-sm font-semibold text-white mb-4 px-2 sm:px-0">Detalle Mensual</h4>
+        <div className="overflow-x-auto -mx-1 px-1">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-slate-400 border-b border-slate-600/50">

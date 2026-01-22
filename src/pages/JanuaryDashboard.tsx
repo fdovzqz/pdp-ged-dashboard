@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp, Activity, Award, Info } from 'lucide-react';
 
 // Components
@@ -16,6 +17,9 @@ import {
   StatsSection
 } from '../components/sections';
 
+// Hooks
+import { useToggleState } from '../hooks';
+
 // Data
 import { 
   totals, 
@@ -28,24 +32,9 @@ import {
 import type { ForecastType, YearType } from '../types';
 
 export const JanuaryDashboard = () => {
-  // State
-  const [activeYears, setActiveYears] = useState<YearType[]>(['2024', '2025', '2026']);
-  const [activeForecast, setActiveForecast] = useState<ForecastType[]>([
-    'probable',
-  ]);
-
-  // Handlers
-  const toggleYear = useCallback((year: YearType) => {
-    setActiveYears((prev) =>
-      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
-    );
-  }, []);
-
-  const toggleForecast = useCallback((type: ForecastType) => {
-    setActiveForecast((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  }, []);
+  // State using custom hooks
+  const [activeYears, toggleYear] = useToggleState<YearType>(['2024', '2025', '2026']);
+  const [activeForecast, toggleForecast] = useToggleState<ForecastType>(['probable']);
 
   // Memoized KPI data
   const kpiData = useMemo(() => ({
@@ -70,7 +59,21 @@ export const JanuaryDashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.1,
+              delayChildren: 0.1,
+            },
+          },
+        }}
+      >
         <KPICard
           title="Total Pagos 2026"
           value={kpiData.totalEvents}
@@ -79,30 +82,26 @@ export const JanuaryDashboard = () => {
           trend="up"
           trendValue={kpiData.growthVs2025}
           accent
-          delay={0}
         />
         <KPICard
           title="Crecimiento Bianual"
           value={kpiData.biannualGrowth}
           subtitle="2024 vs 2026 (mismo período)"
           icon={TrendingUp}
-          delay={0.1}
         />
         <KPICard
           title="Promedio Diario 2026"
           value={kpiData.dailyAverage}
           subtitle={`vs ${kpiData.prevDailyAverage} en 2025`}
           icon={Activity}
-          delay={0.2}
         />
         <KPICard
           title="Máximo Histórico"
           value="6,290"
           subtitle="31 de Enero 2024"
           icon={Award}
-          delay={0.3}
         />
-      </div>
+      </motion.div>
 
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

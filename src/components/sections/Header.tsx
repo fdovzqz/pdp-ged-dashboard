@@ -4,9 +4,10 @@ import { Building2, Activity, Calendar, Clock, Zap, Download, Maximize2 } from '
 interface HeaderProps {
   onExport?: () => void;
   onFullscreen?: () => void;
+  isExporting?: boolean;
 }
 
-export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
+export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderProps) => {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -14,9 +15,9 @@ export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
       transition={{ duration: 0.6 }}
       className="mb-10"
     >
-      <div className="flex flex-wrap items-center justify-between gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         {/* Logo and Title */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500/30 blur-xl rounded-full" />
             <div className="relative bg-linear-to-br from-emerald-400 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-500/20">
@@ -42,9 +43,9 @@ export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
         </div>
 
         {/* Actions and Info */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Period Badge */}
-          <div className="flex items-center gap-3 bg-slate-800/60 backdrop-blur-sm px-4 py-3 rounded-xl border border-slate-700/50">
+          <div className="flex items-center gap-2 sm:gap-3 bg-slate-800/60 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-slate-700/50">
             <Calendar size={18} className="text-emerald-500" />
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">Período</p>
@@ -53,7 +54,7 @@ export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
           </div>
           
           {/* Cutoff Date */}
-          <div className="flex items-center gap-3 bg-slate-800/60 backdrop-blur-sm px-4 py-3 rounded-xl border border-slate-700/50">
+          <div className="flex items-center gap-2 sm:gap-3 bg-slate-800/60 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-slate-700/50">
             <Clock size={18} className="text-amber-500" />
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">Corte</p>
@@ -66,20 +67,30 @@ export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-3 bg-slate-800/60 hover:bg-slate-700/60 backdrop-blur-sm rounded-xl border border-slate-700/50 transition-all duration-200 hover:scale-105"
-                title="Exportar Dashboard"
+                disabled={isExporting}
+                aria-label={isExporting ? 'Exportando dashboard a PDF' : 'Exportar dashboard a PDF'}
+                aria-busy={isExporting}
+                className={`p-3 bg-slate-800/60 hover:bg-slate-700/60 backdrop-blur-sm rounded-xl border border-slate-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                  isExporting ? 'opacity-50 cursor-wait' : 'hover:scale-105'
+                }`}
+                title={isExporting ? 'Exportando...' : 'Exportar Dashboard'}
               >
-                <Download size={18} className="text-slate-400" />
+                {isExporting ? (
+                  <div className="w-[18px] h-[18px] border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin" aria-hidden="true" />
+                ) : (
+                  <Download size={18} className="text-slate-400" aria-hidden="true" />
+                )}
               </button>
             )}
             
             {onFullscreen && (
               <button
                 onClick={onFullscreen}
-                className="p-3 bg-slate-800/60 hover:bg-slate-700/60 backdrop-blur-sm rounded-xl border border-slate-700/50 transition-all duration-200 hover:scale-105"
+                aria-label="Activar pantalla completa"
+                className="p-3 bg-slate-800/60 hover:bg-slate-700/60 backdrop-blur-sm rounded-xl border border-slate-700/50 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 title="Pantalla Completa"
               >
-                <Maximize2 size={18} className="text-slate-400" />
+                <Maximize2 size={18} className="text-slate-400" aria-hidden="true" />
               </button>
             )}
           </div>

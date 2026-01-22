@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart,
@@ -21,7 +21,7 @@ interface HistoricalChartProps {
   onToggleYear: (year: YearType) => void;
 }
 
-export const HistoricalChart = ({ activeYears, onToggleYear }: HistoricalChartProps) => {
+export const HistoricalChart = memo(function HistoricalChart({ activeYears, onToggleYear }: HistoricalChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
   // Calculate accumulated data
@@ -52,7 +52,7 @@ export const HistoricalChart = ({ activeYears, onToggleYear }: HistoricalChartPr
       transition={{ duration: 0.6, delay: 0.2 }}
       className="col-span-2 bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
             <Layers size={20} className="text-emerald-500" />
@@ -63,37 +63,37 @@ export const HistoricalChart = ({ activeYears, onToggleYear }: HistoricalChartPr
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* View Mode Toggle */}
           <div className="flex rounded-xl overflow-hidden border border-slate-600">
             <button
               onClick={() => setViewMode('daily')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                 viewMode === 'daily'
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
               }`}
             >
               <BarChart2 size={14} />
-              Diario
+              <span className="hidden xs:inline">Diario</span>
             </button>
             <button
               onClick={() => setViewMode('accumulated')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                 viewMode === 'accumulated'
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
               }`}
             >
               <TrendingUp size={14} />
-              Acumulado
+              <span className="hidden xs:inline">Acumulado</span>
             </button>
           </div>
 
-          <div className="w-px h-6 bg-slate-600" />
+          <div className="hidden sm:block w-px h-6 bg-slate-600" />
 
           {/* Year toggles */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {(Object.entries(YEAR_COLORS) as [YearType, string][]).map(([year, color]) => (
               <YearBadge
                 key={year}
@@ -186,4 +186,4 @@ export const HistoricalChart = ({ activeYears, onToggleYear }: HistoricalChartPr
       </div>
     </motion.div>
   );
-};
+});

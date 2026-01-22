@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar } from 'lucide-react';
 import { historicalData, getMaxHeatmapValue } from '../../data/historicalData';
@@ -22,7 +22,7 @@ const startDayOfWeek: Record<YearType, number> = {
   '2026': 4, // Enero 2026 empieza en Jueves
 };
 
-export const HeatmapChart = ({ year = '2026' }: HeatmapChartProps) => {
+export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: HeatmapChartProps) {
   const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
   const maxValue = useMemo(() => getMaxHeatmapValue(year), [year]);
   
@@ -191,4 +191,4 @@ export const HeatmapChart = ({ year = '2026' }: HeatmapChartProps) => {
       </div>
     </motion.div>
   );
-};
+});

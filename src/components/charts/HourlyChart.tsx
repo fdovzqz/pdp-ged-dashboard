@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart,
@@ -18,7 +19,7 @@ interface HourlyChartProps {
   onToggleYear: (year: YearType) => void;
 }
 
-export const HourlyChart = ({ activeYears, onToggleYear }: HourlyChartProps) => {
+export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear }: HourlyChartProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -26,7 +27,7 @@ export const HourlyChart = ({ activeYears, onToggleYear }: HourlyChartProps) => 
       transition={{ duration: 0.6, delay: 0.35 }}
       className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4">
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2 font-display">
             <Clock size={18} className="text-cyan-400" />
@@ -36,7 +37,7 @@ export const HourlyChart = ({ activeYears, onToggleYear }: HourlyChartProps) => 
             Total de pagos por hora · Días 1-21 de Enero
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           {(['2024', '2025', '2026'] as YearType[]).map((year) => (
             <YearBadge
               key={year}
@@ -137,4 +138,4 @@ export const HourlyChart = ({ activeYears, onToggleYear }: HourlyChartProps) => 
       </div>
     </motion.div>
   );
-};
+});

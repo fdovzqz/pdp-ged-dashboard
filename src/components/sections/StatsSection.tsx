@@ -26,7 +26,7 @@ export const StatsSection = () => {
           {years.map((year) => (
             <div
               key={year}
-              className="grid grid-cols-[60px_1fr_1fr] gap-3 items-center"
+              className="grid grid-cols-[50px_1fr_1fr] sm:grid-cols-[60px_1fr_1fr] gap-2 sm:gap-3 items-center"
             >
               <span
                 className="font-semibold"
@@ -75,7 +75,7 @@ export const StatsSection = () => {
           {years.map((year) => (
             <div
               key={year}
-              className="grid grid-cols-[60px_1fr_1fr_1fr] gap-3 items-center"
+              className="grid grid-cols-[50px_1fr_1fr_1fr] sm:grid-cols-[60px_1fr_1fr_1fr] gap-1.5 sm:gap-3 items-center"
             >
               <span
                 className="font-semibold"

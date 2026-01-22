@@ -2,6 +2,16 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import type { KPICardProps } from '../../types';
 
+// Animation variants for stagger support
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' }
+  },
+};
+
 export const KPICard = ({
   title,
   value,
@@ -10,12 +20,12 @@ export const KPICard = ({
   trend,
   trendValue,
   accent = false,
-  delay = 0,
 }: KPICardProps) => (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay }}
+    variants={cardVariants}
+    initial="hidden"
+    animate="visible"
+    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
     className={`
       relative overflow-hidden rounded-2xl p-6
       ${accent 
