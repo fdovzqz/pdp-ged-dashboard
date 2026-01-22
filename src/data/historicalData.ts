@@ -6,7 +6,6 @@ import type {
   ForecastData,
   HeatmapData,
   HourlyData,
-  ServiceData
 } from '../types';
 
 // Datos históricos reales de Enero (Días 1-21) - Actualizados desde CSV (UTC-6 México)
@@ -272,54 +271,6 @@ export const hourlyDistribution: HourlyData[] = [
   { hour: 22, label: '10pm', '2024': 548, '2025': 685, '2026': 694 },
   { hour: 23, label: '11pm', '2024': 303, '2025': 311, '2026': 349 },
 ];
-
-// Top servicios (datos simulados)
-export const topServices: ServiceData[] = [
-  { 
-    name: 'Tenencia Vehicular', 
-    transactions: 8542, 
-    amount: 12500000, 
-    growth: 28.5,
-    icon: '🚗'
-  },
-  { 
-    name: 'Predial', 
-    transactions: 6234, 
-    amount: 8900000, 
-    growth: 22.3,
-    icon: '🏠'
-  },
-  { 
-    name: 'Licencias de Conducir', 
-    transactions: 4521, 
-    amount: 3200000, 
-    growth: 35.2,
-    icon: '🪪'
-  },
-  { 
-    name: 'Actas de Nacimiento', 
-    transactions: 3876, 
-    amount: 1500000, 
-    growth: 18.7,
-    icon: '📄'
-  },
-  { 
-    name: 'Agua Potable', 
-    transactions: 2908, 
-    amount: 4200000, 
-    growth: 15.4,
-    icon: '💧'
-  },
-];
-
-// Métricas adicionales
-export const additionalMetrics = {
-  successRate: 98.7,
-  avgProcessingTime: 2.3, // segundos
-  totalAmount: 45800000, // pesos
-  uniqueUsers: 18234,
-  returningUsers: 67.8, // porcentaje
-};
 
 // Calcular el máximo valor para el heatmap
 export const getMaxHeatmapValue = (year: YearType): number => {

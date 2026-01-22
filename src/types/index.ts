@@ -59,14 +59,6 @@ export interface HourlyData {
   '2026': number;
 }
 
-export interface ServiceData {
-  name: string;
-  transactions: number;
-  amount: number;
-  growth: number;
-  icon: string;
-}
-
 export interface TooltipPayload {
   color: string;
   name: string;

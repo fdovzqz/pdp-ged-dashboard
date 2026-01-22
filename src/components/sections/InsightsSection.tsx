@@ -1,15 +1,27 @@
 import { motion } from 'framer-motion';
 import { BarChart3, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
-import { growth24vs26 } from '../../data/historicalData';
+import { growth24vs26, historicalData, totals } from '../../data/historicalData';
 
 export const InsightsSection = () => {
-  // Cálculo de primeros 7 días (datos actualizados desde CSV con UTC-6):
-  // 2024: 8+724+1083+746+1259+577+395 = 4,792
-  // 2025: 180+1492+1329+853+460+1461+1441 = 7,216
-  // 2026: 454+2147+941+795+2168+1854+1822 = 10,181
-  const first7Days2026 = 10181;
-  const first7Days2025 = 7216;
+  // Cálculo dinámico de primeros 7 días
+  const first7Days2026 = historicalData
+    .filter(d => d.day <= 7)
+    .reduce((acc, curr) => acc + curr['2026'], 0);
+    
+  const first7Days2025 = historicalData
+    .filter(d => d.day <= 7)
+    .reduce((acc, curr) => acc + curr['2025'], 0);
+    
   const growthFirst7Days = Math.round(((first7Days2026 - first7Days2025) / first7Days2025) * 100);
+
+  // Obtener pico del día 20 (o buscar el máximo real si queremos ser más genéricos, 
+  // pero mantendré la referencia específica si tiene sentido histórico)
+  const day20Data = historicalData.find(d => d.day === 20);
+  const eventsDay20_2026 = day20Data ? day20Data['2026'] : 0;
+
+  // Totales generales
+  const totalEventsAllYears = totals['2024'] + totals['2025'] + totals['2026'];
+  const growthFormatted = `+${growth24vs26}%`;
 
   const insights = [
     {
@@ -30,7 +42,7 @@ export const InsightsSection = () => {
       description: (
         <>
           El pico del 20 de enero (
-          <span className="text-violet-400 font-semibold">2,627 eventos</span>)
+          <span className="text-violet-400 font-semibold">{eventsDay20_2026.toLocaleString()} eventos</span>)
           demostró la capacidad del sistema para manejar cargas críticas sin degradación.
         </>
       ),
@@ -43,7 +55,7 @@ export const InsightsSection = () => {
       description: (
         <>
           El crecimiento del{' '}
-          <span className="text-cyan-400 font-semibold">{growth24vs26}%</span>{' '}
+          <span className="text-cyan-400 font-semibold">{growthFormatted}</span>{' '}
           en dos años refleja una adopción orgánica y consistente del portal por los ciudadanos.
         </>
       ),
@@ -132,11 +144,13 @@ export const InsightsSection = () => {
               <p className="text-xs text-slate-400 mt-1">Años comparados</p>
             </div>
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">
-              <p className="text-2xl font-bold text-cyan-400">75K+</p>
+              <p className="text-2xl font-bold text-cyan-400">
+                {(totalEventsAllYears / 1000).toFixed(0)}K+
+              </p>
               <p className="text-xs text-slate-400 mt-1">Eventos totales</p>
             </div>
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">
-              <p className="text-2xl font-bold text-amber-400">+37.7%</p>
+              <p className="text-2xl font-bold text-amber-400">{growthFormatted}</p>
               <p className="text-xs text-slate-400 mt-1">Crecimiento</p>
             </div>
           </div>
