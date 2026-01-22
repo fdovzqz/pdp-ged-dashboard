@@ -37,10 +37,10 @@ function parseCSV(filePath) {
   return data;
 }
 
-// Process each file
-const data2026 = parseCSV(path.join(__dirname, '../data/logs-insights-results.csv'));
-const data2025 = parseCSV(path.join(__dirname, '../data/logs-insights-results(1).csv'));
-const data2024 = parseCSV(path.join(__dirname, '../data/logs-insights-results(2).csv'));
+// Process each file (archivos renombrados con formato descriptivo)
+const data2026 = parseCSV(path.join(__dirname, '../data/2026-01-21.csv'));
+const data2025 = parseCSV(path.join(__dirname, '../data/2025-01-31.csv'));
+const data2024 = parseCSV(path.join(__dirname, '../data/2024-01-31.csv'));
 
 console.log('=== 2024 Daily Totals ===');
 const days2024 = Object.entries(data2024)
@@ -173,9 +173,9 @@ function parseCSVForHourly(filePath, yearFilter) {
   return hourlyData;
 }
 
-const hourly2024 = parseCSVForHourly(path.join(__dirname, '../data/logs-insights-results(2).csv'), 2024);
-const hourly2025 = parseCSVForHourly(path.join(__dirname, '../data/logs-insights-results(1).csv'), 2025);
-const hourly2026 = parseCSVForHourly(path.join(__dirname, '../data/logs-insights-results.csv'), 2026);
+const hourly2024 = parseCSVForHourly(path.join(__dirname, '../data/2024-01-31.csv'), 2024);
+const hourly2025 = parseCSVForHourly(path.join(__dirname, '../data/2025-01-31.csv'), 2025);
+const hourly2026 = parseCSVForHourly(path.join(__dirname, '../data/2026-01-21.csv'), 2026);
 
 const hourLabels = ['12am', '1am', '2am', '3am', '4am', '5am', '6am', '7am', '8am', '9am', '10am', '11am', 
                     '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm', '9pm', '10pm', '11pm'];

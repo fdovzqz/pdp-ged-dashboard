@@ -26,7 +26,7 @@ export const NotesSection = () => {
                 El año 2025 fue afectado por{' '}
                 <span className="text-red-400 font-semibold">problemas de rechazos</span>{' '}
                 en el proceso de pagos MIT. Se migró a EVO{' '}
-                <span className="text-amber-400 font-semibold">3 días antes del fin de mes</span>.
+                <span className="text-amber-400 font-semibold">4 días antes del fin de mes</span>.
               </p>
             </div>
           </div>
@@ -58,10 +58,8 @@ export const NotesSection = () => {
             <div>
               <p className="text-sm text-slate-200 leading-relaxed">
                 Los datos del 2026 son al corte de las{' '}
-                <span className="text-amber-400 font-semibold">6:00 PM del 21 de Enero</span>.
-                Restan aproximadamente{' '}
-                <span className="text-cyan-400 font-semibold">6 horas de operación</span>{' '}
-                de pagos para ese día.
+                <span className="text-amber-400 font-semibold">11:00 PM del 21 de Enero</span>.
+                Día 21 completo con datos actualizados.
               </p>
             </div>
           </div>
