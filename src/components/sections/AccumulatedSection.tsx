@@ -75,7 +75,7 @@ export const AccumulatedSection = () => {
               {totals[year].toLocaleString()}
             </p>
             <p className="text-sm text-slate-400">
-              eventos totales
+              pagos totales
             </p>
             
             {/* Daily average */}
@@ -103,21 +103,21 @@ export const AccumulatedSection = () => {
             <p className="text-xs text-slate-400 mb-1">2024 → 2025</p>
             <p className="text-lg font-bold text-violet-400">+{growth2025vs2024}%</p>
             <p className="text-xs text-slate-500 mt-1">
-              +{(currentDayData['2025'] - currentDayData['2024']).toLocaleString()} eventos
+              +{(currentDayData['2025'] - currentDayData['2024']).toLocaleString()} pagos
             </p>
           </div>
           <div className="p-3 bg-slate-800/50 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">2025 → 2026</p>
             <p className="text-lg font-bold text-emerald-400">+{growth2026vs2025}%</p>
             <p className="text-xs text-slate-500 mt-1">
-              +{(currentDayData['2026'] - currentDayData['2025']).toLocaleString()} eventos
+              +{(currentDayData['2026'] - currentDayData['2025']).toLocaleString()} pagos
             </p>
           </div>
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">2024 → 2026</p>
             <p className="text-lg font-bold text-emerald-400">+{growth2026vs2024}%</p>
             <p className="text-xs text-slate-500 mt-1">
-              +{(currentDayData['2026'] - currentDayData['2024']).toLocaleString()} eventos
+              +{(currentDayData['2026'] - currentDayData['2024']).toLocaleString()} pagos
             </p>
           </div>
         </div>

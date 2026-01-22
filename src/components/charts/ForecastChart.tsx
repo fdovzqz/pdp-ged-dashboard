@@ -65,7 +65,7 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className="bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
@@ -74,7 +74,7 @@ export const ForecastChart = ({ activeForecast, onToggleForecast, activeYears, o
             Proyección de Cierre de Mes
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            {viewMode === 'daily' ? 'Eventos diarios' : 'Eventos acumulados'} · Forecast para días 22-31
+            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Forecast para días 22-31
           </p>
         </div>
         

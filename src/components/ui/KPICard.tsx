@@ -19,7 +19,7 @@ export const KPICard = ({
     className={`
       relative overflow-hidden rounded-2xl p-6
       ${accent 
-        ? 'bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700' 
+        ? 'bg-linear-to-br from-emerald-500 via-emerald-600 to-teal-700' 
         : 'bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm'
       }
     `}

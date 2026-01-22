@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { BarChart3, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
-import { growth24vs26, historicalData, totals } from '../../data/historicalData';
+import { growth24vs26, historicalData, totals, fullMonthTotals } from '../../data/historicalData';
 
 export const InsightsSection = () => {
   // Cálculo dinámico de primeros 7 días
@@ -14,13 +14,16 @@ export const InsightsSection = () => {
     
   const growthFirst7Days = Math.round(((first7Days2026 - first7Days2025) / first7Days2025) * 100);
 
-  // Obtener pico del día 20 (o buscar el máximo real si queremos ser más genéricos, 
-  // pero mantendré la referencia específica si tiene sentido histórico)
-  const day20Data = historicalData.find(d => d.day === 20);
-  const eventsDay20_2026 = day20Data ? day20Data['2026'] : 0;
+  // Calcular días donde 2026 superó a 2025
+  const daysWhere2026Beats2025 = historicalData.filter(d => d['2026'] > d['2025']).length;
+  
+  // Promedio diario
+  const avgDaily2026 = Math.round(totals['2026'] / 21);
+  const avgDaily2025 = Math.round(totals['2025'] / 21);
+  const avgGrowth = Math.round(((avgDaily2026 - avgDaily2025) / avgDaily2025) * 100);
 
-  // Totales generales
-  const totalEventsAllYears = totals['2024'] + totals['2025'] + totals['2026'];
+  // Totales generales (enero completo para 2024/2025, parcial para 2026)
+  const totalAllYears = fullMonthTotals['2024'] + fullMonthTotals['2025'] + totals['2026'];
   const growthFormatted = `+${growth24vs26}%`;
 
   const insights = [
@@ -29,7 +32,7 @@ export const InsightsSection = () => {
       description: (
         <>
           Los primeros 7 días de enero 2026 registraron{' '}
-          <span className="text-emerald-400 font-semibold">{first7Days2026.toLocaleString()} eventos</span>,
+          <span className="text-emerald-400 font-semibold">{first7Days2026.toLocaleString()} pagos</span>,
           un crecimiento del {growthFirst7Days}% respecto al mismo período de 2025, indicando mayor adopción del portal.
         </>
       ),
@@ -38,12 +41,12 @@ export const InsightsSection = () => {
       iconColor: '#34d399',
     },
     {
-      title: 'Récord de Capacidad',
+      title: 'Promedio Diario Superior',
       description: (
         <>
-          El pico del 20 de enero (
-          <span className="text-violet-400 font-semibold">{eventsDay20_2026.toLocaleString()} eventos</span>)
-          demostró la capacidad del sistema para manejar cargas críticas sin degradación.
+          El promedio diario de 2026 es de{' '}
+          <span className="text-violet-400 font-semibold">{avgDaily2026.toLocaleString()} pagos/día</span>,
+          un {avgGrowth}% más que 2025. En {daysWhere2026Beats2025} de 21 días, 2026 superó al año anterior.
         </>
       ),
       color: 'violet',
@@ -106,7 +109,7 @@ export const InsightsSection = () => {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="flex flex-col gap-6"
       >
-        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 rounded-3xl p-6">
+        <div className="bg-linear-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 rounded-3xl p-6">
           <div className="flex items-start gap-4">
             <div className="bg-amber-500/30 p-3 rounded-xl">
               <AlertTriangle size={24} className="text-amber-400" />
@@ -118,7 +121,7 @@ export const InsightsSection = () => {
               <p className="text-sm text-slate-200 leading-relaxed mb-4">
                 Basado en patrones históricos, se espera un incremento significativo
                 de actividad entre los días 27-31. El sistema podría procesar hasta{' '}
-                <span className="text-amber-400 font-bold">6,500+ eventos</span>{' '}
+                <span className="text-amber-400 font-bold">6,500+ pagos</span>{' '}
                 en el pico del día 31 (récord 2024: 6,290).
               </p>
               <div className="flex items-center gap-2 text-xs text-amber-300">
@@ -145,9 +148,9 @@ export const InsightsSection = () => {
             </div>
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">
               <p className="text-2xl font-bold text-cyan-400">
-                {(totalEventsAllYears / 1000).toFixed(0)}K+
+                {(totalAllYears / 1000).toFixed(0)}K+
               </p>
-              <p className="text-xs text-slate-400 mt-1">Eventos totales</p>
+              <p className="text-xs text-slate-400 mt-1">Pagos totales</p>
             </div>
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">
               <p className="text-2xl font-bold text-amber-400">{growthFormatted}</p>

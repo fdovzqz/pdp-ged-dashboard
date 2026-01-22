@@ -126,7 +126,7 @@ export const HeatmapChart = ({ year = '2026' }: HeatmapChartProps) => {
               }}
             >
               <p className="text-orange-400 font-bold text-sm">Día {hoveredCell.day}</p>
-              <p className="text-white font-semibold">{hoveredCell.value.toLocaleString()} eventos</p>
+              <p className="text-white font-semibold">{hoveredCell.value.toLocaleString()} pagos</p>
             </motion.div>
           )}
         </AnimatePresence>

@@ -7,7 +7,7 @@ export const NotesSection = () => {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.45 }}
-      className="bg-gradient-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm rounded-3xl border border-slate-600/30 p-6"
+      className="bg-linear-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm rounded-3xl border border-slate-600/30 p-6"
     >
       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
         <AlertTriangle size={18} className="text-amber-400" />
@@ -58,7 +58,7 @@ export const NotesSection = () => {
             <div>
               <p className="text-sm text-slate-200 leading-relaxed">
                 Los datos del 2026 son al corte de las{' '}
-                <span className="text-amber-400 font-semibold">11:00 PM del 21 de Enero</span>.
+                <span className="text-amber-400 font-semibold">12:00 PM del 21 de Enero</span>.
                 Día 21 completo con datos actualizados.
               </p>
             </div>

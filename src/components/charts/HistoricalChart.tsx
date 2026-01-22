@@ -59,7 +59,7 @@ export const HistoricalChart = ({ activeYears, onToggleYear }: HistoricalChartPr
             Tendencia Histórica Comparativa
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            {viewMode === 'daily' ? 'Eventos diarios de pago' : 'Eventos acumulados'} · Días 1-21 de Enero
+            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Días 1-21 de Enero
           </p>
         </div>
         

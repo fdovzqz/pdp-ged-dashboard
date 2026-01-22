@@ -18,7 +18,7 @@ export const Footer = () => {
         </p>
       </div>
       <p className="text-slate-600 text-xs">
-        © 2026 Gobierno del Estado de Durango · Dashboard Ejecutivo de Análisis de Crecimiento
+        © 2026 PaGob · Dashboard Ejecutivo de Análisis de Crecimiento
       </p>
     </motion.footer>
   );

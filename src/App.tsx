@@ -79,7 +79,7 @@ const App = () => {
   }), []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Background Pattern */}
       <div className="fixed inset-0 opacity-30 dot-pattern pointer-events-none" />
 
@@ -91,7 +91,7 @@ const App = () => {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <KPICard
-            title="Total Eventos 2026"
+            title="Total Pagos 2026"
             value={kpiData.totalEvents}
             subtitle="YTD al 21 de Enero"
             icon={BarChart3}

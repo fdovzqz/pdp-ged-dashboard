@@ -33,7 +33,7 @@ export const HourlyChart = ({ activeYears, onToggleYear }: HourlyChartProps) => 
             Distribución por Hora del Día
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Total de eventos por hora · Días 1-21 de Enero
+            Total de pagos por hora · Días 1-21 de Enero
           </p>
         </div>
         <div className="flex gap-2">

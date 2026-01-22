@@ -19,14 +19,14 @@ export const Header = ({ onExport, onFullscreen }: HeaderProps) => {
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500/30 blur-xl rounded-full" />
-            <div className="relative bg-gradient-to-br from-emerald-400 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-500/20">
+            <div className="relative bg-linear-to-br from-emerald-400 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-500/20">
               <Building2 size={32} className="text-white" />
             </div>
           </div>
           
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent font-display">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent font-display">
                 Portal de Pagos
               </h1>
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full">

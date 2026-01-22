@@ -30,14 +30,14 @@ export const historicalData: DailyData[] = [
   { day: 18, '2024': 1291, '2025': 579, '2026': 423 },
   { day: 19, '2024': 1027, '2025': 501, '2026': 1222 },
   { day: 20, '2024': 446, '2025': 1290, '2026': 2627 },
-  { day: 21, '2024': 279, '2025': 1341, '2026': 1783 },
+  { day: 21, '2024': 279, '2025': 1341, '2026': 1846 },
 ];
 
 // Totales hasta el día 21 - Actualizados desde CSV (UTC-6 México)
 export const totals = {
   '2024': 20926,
   '2025': 25140,
-  '2026': 29033,
+  '2026': 29096,
 };
 
 // Promedios diarios
@@ -218,9 +218,9 @@ export const growth24vs25 = (((totals['2025'] - totals['2024']) / totals['2024']
 
 // Datos para el gráfico de barras comparativo
 export const comparisonData = [
-  { name: '2024', eventos: totals['2024'], fill: '#f472b6' },
-  { name: '2025', eventos: totals['2025'], fill: '#8b5cf6' },
-  { name: '2026', eventos: totals['2026'], fill: '#10b981' },
+  { name: '2024', pagos: totals['2024'], fill: '#f472b6' },
+  { name: '2025', pagos: totals['2025'], fill: '#8b5cf6' },
+  { name: '2026', pagos: totals['2026'], fill: '#10b981' },
 ];
 
 // Generar datos para heatmap semanal
@@ -267,8 +267,8 @@ export const hourlyDistribution: HourlyData[] = [
   { hour: 18, label: '6pm', '2024': 1000, '2025': 1396, '2026': 1662 },
   { hour: 19, label: '7pm', '2024': 907, '2025': 1282, '2026': 1460 },
   { hour: 20, label: '8pm', '2024': 843, '2025': 1113, '2026': 1334 },
-  { hour: 21, label: '9pm', '2024': 690, '2025': 1010, '2026': 1157 },
-  { hour: 22, label: '10pm', '2024': 548, '2025': 685, '2026': 694 },
+  { hour: 21, label: '9pm', '2024': 690, '2025': 1010, '2026': 1187 },
+  { hour: 22, label: '10pm', '2024': 548, '2025': 685, '2026': 727 },
   { hour: 23, label: '11pm', '2024': 303, '2025': 311, '2026': 349 },
 ];
 
