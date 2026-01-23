@@ -25,7 +25,10 @@ import {
   totals, 
   dailyAverages, 
   growth25vs26, 
-  growth24vs26 
+  growth24vs26,
+  lastAvailableDay,
+  formatDayMonth,
+  getHistoricalMax
 } from '../data/historicalData';
 
 // Types
@@ -37,13 +40,18 @@ export const JanuaryDashboard = () => {
   const [activeForecast, toggleForecast] = useToggleState<ForecastType>(['probable']);
 
   // Memoized KPI data
-  const kpiData = useMemo(() => ({
-    totalEvents: totals['2026'].toLocaleString(),
-    biannualGrowth: `+${growth24vs26}%`,
-    dailyAverage: dailyAverages['2026'].toLocaleString(),
-    prevDailyAverage: dailyAverages['2025'].toLocaleString(),
-    growthVs2025: `+${growth25vs26}%`,
-  }), []);
+  const kpiData = useMemo(() => {
+    const historicalMax = getHistoricalMax();
+    return {
+      totalEvents: totals['2026'].toLocaleString(),
+      biannualGrowth: `+${growth24vs26}%`,
+      dailyAverage: dailyAverages['2026'].toLocaleString(),
+      prevDailyAverage: dailyAverages['2025'].toLocaleString(),
+      growthVs2025: `+${growth25vs26}%`,
+      maxValue: historicalMax.value.toLocaleString(),
+      maxDate: `${historicalMax.day} de Enero ${historicalMax.year}`,
+    };
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -77,7 +85,7 @@ export const JanuaryDashboard = () => {
         <KPICard
           title="Total Pagos 2026"
           value={kpiData.totalEvents}
-          subtitle="YTD al 21 de Enero"
+          subtitle={`YTD al ${formatDayMonth(lastAvailableDay)}`}
           icon={BarChart3}
           trend="up"
           trendValue={kpiData.growthVs2025}
@@ -97,8 +105,8 @@ export const JanuaryDashboard = () => {
         />
         <KPICard
           title="Máximo Histórico"
-          value="6,290"
-          subtitle="31 de Enero 2024"
+          value={kpiData.maxValue}
+          subtitle={kpiData.maxDate}
           icon={Award}
         />
       </motion.div>

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, BarChart3 } from 'lucide-react';
-import { historicalData, totals } from '../../data/historicalData';
+import { historicalData, totals, lastAvailableDay, formatDayMonth } from '../../data/historicalData';
 import { YEAR_COLORS, type YearType } from '../../types';
 
 export const AccumulatedSection = () => {
@@ -47,7 +47,7 @@ export const AccumulatedSection = () => {
       <div className="flex items-center gap-2 mb-6">
         <BarChart3 size={20} className="text-emerald-400" />
         <h3 className="text-xl font-bold text-white font-display">
-          Acumulado al Día 21 de Enero
+          Acumulado al Día {formatDayMonth(lastAvailableDay)}
         </h3>
       </div>
 
@@ -83,7 +83,7 @@ export const AccumulatedSection = () => {
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-400">Promedio diario</span>
                 <span className="font-semibold text-white">
-                  {Math.round(totals[year] / 21).toLocaleString()}
+                  {Math.round(totals[year] / lastAvailableDay).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -95,7 +95,7 @@ export const AccumulatedSection = () => {
       <div className="bg-slate-700/30 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={16} className="text-emerald-400" />
-          <h4 className="text-sm font-semibold text-white">Crecimiento Año vs Año (al día 21)</h4>
+          <h4 className="text-sm font-semibold text-white">Crecimiento Año vs Año (al día {lastAvailableDay})</h4>
         </div>
         
         <div className="grid grid-cols-3 gap-4 text-center">

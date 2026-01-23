@@ -1,7 +1,7 @@
 import { useMemo, useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar } from 'lucide-react';
-import { historicalData, getMaxHeatmapValue } from '../../data/historicalData';
+import { historicalData, getMaxHeatmapValue, lastAvailableDay } from '../../data/historicalData';
 import type { YearType } from '../../types';
 
 interface HeatmapChartProps {
@@ -13,6 +13,7 @@ interface HoveredCell {
   value: number;
   x: number;
   y: number;
+  placement: 'top' | 'bottom' | 'left' | 'right';
 }
 
 // Día de inicio de cada año (0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb)
@@ -39,8 +40,8 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
       currentWeek.push(null);
     }
     
-    // Agregar los días 1-21
-    for (let day = 1; day <= 21; day++) {
+    // Agregar los días disponibles
+    for (let day = 1; day <= lastAvailableDay; day++) {
       currentWeek.push(day);
       
       // Si es sábado (posición 6), empezar nueva semana
@@ -87,13 +88,51 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
 
   const handleMouseEnter = (day: number, value: number, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const parentRect = event.currentTarget.closest('.heatmap-container')?.getBoundingClientRect();
+    const container = event.currentTarget.closest('.heatmap-container');
+    const parentRect = container?.getBoundingClientRect();
+    
     if (parentRect) {
+      const tooltipWidth = 140; // Ancho aproximado del tooltip
+      const tooltipHeight = 60; // Alto aproximado del tooltip
+      const padding = 8; // Padding de seguridad
+      
+      const cellCenterX = rect.left - parentRect.left + rect.width / 2;
+      const cellTop = rect.top - parentRect.top;
+      const cellBottom = cellTop + rect.height;
+      
+      // Determinar posición horizontal - asegurar que no se salga
+      let x = cellCenterX;
+      let placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
+      
+      // Calcular límites del contenedor
+      const containerLeft = padding;
+      const containerRight = parentRect.width - padding;
+      const tooltipHalfWidth = tooltipWidth / 2;
+      
+      // Si el tooltip se sale por la derecha
+      if (cellCenterX + tooltipHalfWidth > containerRight) {
+        x = containerRight - tooltipHalfWidth;
+      }
+      // Si el tooltip se sale por la izquierda
+      else if (cellCenterX - tooltipHalfWidth < containerLeft) {
+        x = containerLeft + tooltipHalfWidth;
+      }
+      
+      // Determinar posición vertical
+      let y = cellTop - padding;
+      
+      // Si no hay espacio arriba, mostrar abajo
+      if (cellTop < tooltipHeight + padding) {
+        y = cellBottom + padding;
+        placement = 'bottom';
+      }
+      
       setHoveredCell({
         day,
         value,
-        x: rect.left - parentRect.left + rect.width / 2,
-        y: rect.top - parentRect.top - 10,
+        x,
+        y,
+        placement,
       });
     }
   };
@@ -103,26 +142,28 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6 overflow-visible"
     >
       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
         <Calendar size={18} className="text-orange-400" />
         Mapa de Calor - Enero {year}
       </h3>
       
-      <div className="overflow-x-auto heatmap-container relative">
+      <div className="heatmap-container relative overflow-visible">
         {/* Tooltip */}
         <AnimatePresence>
           {hoveredCell && (
             <motion.div
-              initial={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, y: hoveredCell.placement === 'top' ? 5 : -5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className="absolute z-20 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 shadow-xl pointer-events-none"
+              exit={{ opacity: 0, y: hoveredCell.placement === 'top' ? 5 : -5 }}
+              className="absolute z-20 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 shadow-xl pointer-events-none whitespace-nowrap"
               style={{
-                left: hoveredCell.x,
-                top: hoveredCell.y,
-                transform: 'translate(-50%, -100%)',
+                left: `${hoveredCell.x}px`,
+                top: `${hoveredCell.y}px`,
+                transform: hoveredCell.placement === 'top' 
+                  ? 'translate(-50%, -100%)' 
+                  : 'translate(-50%, 0%)',
               }}
             >
               <p className="text-orange-400 font-bold text-sm">Día {hoveredCell.day}</p>

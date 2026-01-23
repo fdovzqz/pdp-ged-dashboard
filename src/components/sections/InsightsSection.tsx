@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { BarChart3, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
-import { growth24vs26, historicalData, totals, fullMonthTotals } from '../../data/historicalData';
+import { growth24vs26, historicalData, totals, fullMonthTotals, lastAvailableDay } from '../../data/historicalData';
 
 export const InsightsSection = () => {
   // Cálculo dinámico de primeros 7 días
@@ -18,8 +18,8 @@ export const InsightsSection = () => {
   const daysWhere2026Beats2025 = historicalData.filter(d => d['2026'] > d['2025']).length;
   
   // Promedio diario
-  const avgDaily2026 = Math.round(totals['2026'] / 21);
-  const avgDaily2025 = Math.round(totals['2025'] / 21);
+  const avgDaily2026 = Math.round(totals['2026'] / lastAvailableDay);
+  const avgDaily2025 = Math.round(totals['2025'] / lastAvailableDay);
   const avgGrowth = Math.round(((avgDaily2026 - avgDaily2025) / avgDaily2025) * 100);
 
   // Totales generales (enero completo para 2024/2025, parcial para 2026)
@@ -46,7 +46,7 @@ export const InsightsSection = () => {
         <>
           El promedio diario de 2026 es de{' '}
           <span className="text-violet-400 font-semibold">{avgDaily2026.toLocaleString()} pagos/día</span>,
-          un {avgGrowth}% más que 2025. En {daysWhere2026Beats2025} de 21 días, 2026 superó al año anterior.
+          un {avgGrowth}% más que 2025. En {daysWhere2026Beats2025} de {lastAvailableDay} días, 2026 superó al año anterior.
         </>
       ),
       color: 'violet',
@@ -139,7 +139,7 @@ export const InsightsSection = () => {
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">
-              <p className="text-2xl font-bold text-emerald-400">21</p>
+              <p className="text-2xl font-bold text-emerald-400">{lastAvailableDay}</p>
               <p className="text-xs text-slate-400 mt-1">Días analizados</p>
             </div>
             <div className="text-center p-4 bg-slate-700/30 rounded-xl">

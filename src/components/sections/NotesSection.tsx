@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle, Clock } from 'lucide-react';
+import { lastAvailableDay, formatDayMonth } from '../../data/historicalData';
 
 export const NotesSection = () => {
   return (
@@ -58,8 +59,8 @@ export const NotesSection = () => {
             <div>
               <p className="text-sm text-slate-200 leading-relaxed">
                 Los datos del 2026 son al corte de las{' '}
-                <span className="text-amber-400 font-semibold">12:00 PM del 21 de Enero</span>.
-                Día 21 completo con datos actualizados.
+                <span className="text-amber-400 font-semibold">12:00 PM del {formatDayMonth(lastAvailableDay)}</span>.
+                Día {lastAvailableDay} completo con datos actualizados.
               </p>
             </div>
           </div>

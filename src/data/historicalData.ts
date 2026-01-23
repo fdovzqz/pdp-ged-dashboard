@@ -8,7 +8,7 @@ import type {
   HourlyData,
 } from '../types';
 
-// Datos históricos reales de Enero (Días 1-21) - Actualizados desde CSV (UTC-6 México)
+// Datos históricos reales de Enero (Días 1-22) - Actualizados desde CSV (UTC-6 México)
 export const historicalData: DailyData[] = [
   { day: 1, '2024': 8, '2025': 180, '2026': 454 },
   { day: 2, '2024': 724, '2025': 1492, '2026': 2147 },
@@ -30,24 +30,25 @@ export const historicalData: DailyData[] = [
   { day: 18, '2024': 1291, '2025': 579, '2026': 423 },
   { day: 19, '2024': 1027, '2025': 501, '2026': 1222 },
   { day: 20, '2024': 446, '2025': 1290, '2026': 2627 },
-  { day: 21, '2024': 279, '2025': 1341, '2026': 1908 },
+  { day: 21, '2024': 279, '2025': 1341, '2026': 1909 },
+  { day: 22, '2024': 1344, '2025': 1535, '2026': 1904 },
 ];
 
-// Totales hasta el día 21 - Actualizados desde CSV (UTC-6 México)
+// Totales hasta el día 22 - Actualizados desde CSV (UTC-6 México)
 export const totals = {
-  '2024': 20926,
-  '2025': 25140,
-  '2026': 29158,
+  '2024': 22270,
+  '2025': 26675,
+  '2026': 31063,
 };
 
 // Promedios diarios
 export const dailyAverages = {
-  '2024': Math.round(totals['2024'] / 21),
-  '2025': Math.round(totals['2025'] / 21),
-  '2026': Math.round(totals['2026'] / 21),
+  '2024': Math.round(totals['2024'] / 22),
+  '2025': Math.round(totals['2025'] / 22),
+  '2026': Math.round(totals['2026'] / 22),
 };
 
-// Días de fin de semana por año (hasta día 21)
+// Días de fin de semana por año (hasta día 22)
 // Enero 2024: Día 1 = Lunes -> Sáb=6,13,20 Dom=7,14,21
 // Enero 2025: Día 1 = Miércoles -> Sáb=4,11,18 Dom=5,12,19
 // Enero 2026: Día 1 = Jueves -> Sáb=3,10,17 Dom=4,11,18
@@ -57,11 +58,11 @@ export const weekendDays: Record<YearType, number[]> = {
   '2026': [3, 4, 10, 11, 17, 18], // Sáb: 3,10,17 | Dom: 4,11,18
 };
 
-// Calcular cantidad de días L-V y S-D hasta el día 21 para cada año
+// Calcular cantidad de días L-V y S-D hasta el día 22 para cada año
 export const weekdayCount: Record<YearType, { weekdays: number; weekends: number }> = {
-  '2024': { weekdays: 15, weekends: 6 }, // L-V: 15 días, S-D: 6 días
-  '2025': { weekdays: 15, weekends: 6 }, // L-V: 15 días, S-D: 6 días
-  '2026': { weekdays: 15, weekends: 6 }, // L-V: 15 días, S-D: 6 días
+  '2024': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es lunes)
+  '2025': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es miércoles)
+  '2026': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es jueves)
 };
 
 // Nombres de días de la semana
@@ -102,7 +103,7 @@ export const calculateWeekdayStats = (): Record<YearType, WeekdayStats> => {
   return stats as Record<YearType, WeekdayStats>;
 };
 
-// Estadísticas por período del mes (solo hasta día 21)
+// Estadísticas por período del mes (solo hasta día 22)
 // Arranque: días 1-7, Medio: días 8-14, Cierre: días 15-21
 export const calculatePeriodStats = (): Record<YearType, PeriodStats> => {
   const stats: Record<string, PeriodStats> = {};
@@ -128,14 +129,14 @@ export const calculatePeriodStats = (): Record<YearType, PeriodStats> => {
   return stats as Record<YearType, PeriodStats>;
 };
 
-// Datos históricos completos del mes (días 22-31 de años anteriores) - Actualizados desde CSV (UTC-6 México)
+// Datos históricos completos del mes (días 23-31 de años anteriores) - Actualizados desde CSV (UTC-6 México)
 const historicalDataFull2024: Record<number, number> = {
-  22: 1344, 23: 1629, 24: 2568, 25: 1483, 26: 1697,
+  23: 1629, 24: 2568, 25: 1483, 26: 1697,
   27: 1028, 28: 815, 29: 3373, 30: 4318, 31: 6290,
 };
 
 const historicalDataFull2025: Record<number, number> = {
-  22: 1535, 23: 1387, 24: 1181, 25: 654, 26: 671,
+  23: 1387, 24: 1181, 25: 654, 26: 671,
   27: 2003, 28: 2991, 29: 3116, 30: 3486, 31: 4639,
 };
 
@@ -145,8 +146,8 @@ const total2025Days22to31 = Object.values(historicalDataFull2025).reduce((a, b) 
 
 // Totales completos de enero (días 1-31) - Actualizados desde CSV (UTC-6 México)
 export const fullMonthTotals = {
-  '2024': totals['2024'] + total2024Days22to31, // 20,926 + 24,545 = 45,471
-  '2025': totals['2025'] + total2025Days22to31, // 25,140 + 21,663 = 46,803
+  '2024': totals['2024'] + total2024Days22to31, // 22,270 + 23,201 = 45,471
+  '2025': totals['2025'] + total2025Days22to31, // 26,675 + 20,128 = 46,803
 };
 
 // Generar proyecciones para días 22-31
@@ -166,11 +167,10 @@ export const generateForecast = (): ForecastData[] => {
     });
   });
 
-  // Proyecciones para días 22-31 (basadas en datos reales de 2024 y 2025)
-  // 2024: 22=1344, 23=1629, 24=2568, 25=1483, 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
-  // 2025: 22=1535, 23=1387, 24=1181, 25=654, 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
+  // Proyecciones para días 23-31 (basadas en datos reales de 2024 y 2025)
+  // 2024: 23=1629, 24=2568, 25=1483, 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
+  // 2025: 23=1387, 24=1181, 25=654, 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
   const baseProjections = [
-    { day: 22, conservador: 1400, probable: 1600, optimista: 1850 },
     { day: 23, conservador: 1400, probable: 1650, optimista: 1900 },
     { day: 24, conservador: 1200, probable: 1800, optimista: 2600 },
     { day: 25, conservador: 700, probable: 1100, optimista: 1500 },
@@ -201,13 +201,13 @@ export const calculateForecastTotals = (forecastData: ForecastData[]) => {
   return {
     conservador:
       totals['2026'] +
-      forecastData.slice(21).reduce((sum, d) => sum + d.conservador, 0),
+      forecastData.slice(22).reduce((sum, d) => sum + d.conservador, 0),
     probable:
       totals['2026'] +
-      forecastData.slice(21).reduce((sum, d) => sum + d.probable, 0),
+      forecastData.slice(22).reduce((sum, d) => sum + d.probable, 0),
     optimista:
       totals['2026'] +
-      forecastData.slice(21).reduce((sum, d) => sum + d.optimista, 0),
+      forecastData.slice(22).reduce((sum, d) => sum + d.optimista, 0),
   };
 };
 
@@ -244,32 +244,32 @@ export const generateHeatmapData = (year: YearType): HeatmapData[] => {
   return data;
 };
 
-// Datos de distribución por hora - Actualizados desde CSV (UTC-6 México, días 1-21)
+// Datos de distribución por hora - Actualizados desde CSV (UTC-6 México, días 1-22)
 export const hourlyDistribution: HourlyData[] = [
-  { hour: 0, label: '12am', '2024': 121, '2025': 156, '2026': 314 },
-  { hour: 1, label: '1am', '2024': 44, '2025': 49, '2026': 300 },
-  { hour: 2, label: '2am', '2024': 22, '2025': 25, '2026': 34 },
+  { hour: 0, label: '12am', '2024': 123, '2025': 157, '2026': 316 },
+  { hour: 1, label: '1am', '2024': 45, '2025': 52, '2026': 304 },
+  { hour: 2, label: '2am', '2024': 22, '2025': 25, '2026': 36 },
   { hour: 3, label: '3am', '2024': 2, '2025': 58, '2026': 21 },
-  { hour: 4, label: '4am', '2024': 6, '2025': 15, '2026': 13 },
-  { hour: 5, label: '5am', '2024': 6, '2025': 14, '2026': 25 },
-  { hour: 6, label: '6am', '2024': 12, '2025': 54, '2026': 57 },
-  { hour: 7, label: '7am', '2024': 93, '2025': 186, '2026': 190 },
-  { hour: 8, label: '8am', '2024': 388, '2025': 714, '2026': 739 },
-  { hour: 9, label: '9am', '2024': 1047, '2025': 1396, '2026': 1502 },
-  { hour: 10, label: '10am', '2024': 1760, '2025': 1908, '2026': 2145 },
-  { hour: 11, label: '11am', '2024': 2174, '2025': 2490, '2026': 2734 },
-  { hour: 12, label: '12pm', '2024': 2334, '2025': 2588, '2026': 3010 },
-  { hour: 13, label: '1pm', '2024': 2194, '2025': 2479, '2026': 2655 },
-  { hour: 14, label: '2pm', '2024': 1978, '2025': 1928, '2026': 2416 },
-  { hour: 15, label: '3pm', '2024': 1720, '2025': 1734, '2026': 2086 },
-  { hour: 16, label: '4pm', '2024': 1524, '2025': 1821, '2026': 1987 },
-  { hour: 17, label: '5pm', '2024': 1210, '2025': 1728, '2026': 2149 },
-  { hour: 18, label: '6pm', '2024': 1000, '2025': 1396, '2026': 1662 },
-  { hour: 19, label: '7pm', '2024': 907, '2025': 1282, '2026': 1460 },
-  { hour: 20, label: '8pm', '2024': 843, '2025': 1113, '2026': 1334 },
-  { hour: 21, label: '9pm', '2024': 690, '2025': 1010, '2026': 1187 },
-  { hour: 22, label: '10pm', '2024': 548, '2025': 685, '2026': 756 },
-  { hour: 23, label: '11pm', '2024': 303, '2025': 311, '2026': 382 },
+  { hour: 4, label: '4am', '2024': 6, '2025': 15, '2026': 14 },
+  { hour: 5, label: '5am', '2024': 6, '2025': 17, '2026': 28 },
+  { hour: 6, label: '6am', '2024': 12, '2025': 59, '2026': 57 },
+  { hour: 7, label: '7am', '2024': 95, '2025': 211, '2026': 199 },
+  { hour: 8, label: '8am', '2024': 414, '2025': 746, '2026': 796 },
+  { hour: 9, label: '9am', '2024': 1103, '2025': 1463, '2026': 1601 },
+  { hour: 10, label: '10am', '2024': 1848, '2025': 2030, '2026': 2299 },
+  { hour: 11, label: '11am', '2024': 2342, '2025': 2621, '2026': 2917 },
+  { hour: 12, label: '12pm', '2024': 2475, '2025': 2739, '2026': 3192 },
+  { hour: 13, label: '1pm', '2024': 2375, '2025': 2646, '2026': 2814 },
+  { hour: 14, label: '2pm', '2024': 2097, '2025': 2049, '2026': 2502 },
+  { hour: 15, label: '3pm', '2024': 1823, '2025': 1865, '2026': 2342 },
+  { hour: 16, label: '4pm', '2024': 1602, '2025': 1912, '2026': 2137 },
+  { hour: 17, label: '5pm', '2024': 1296, '2025': 1838, '2026': 2239 },
+  { hour: 18, label: '6pm', '2024': 1077, '2025': 1472, '2026': 1804 },
+  { hour: 19, label: '7pm', '2024': 972, '2025': 1373, '2026': 1555 },
+  { hour: 20, label: '8pm', '2024': 905, '2025': 1194, '2026': 1406 },
+  { hour: 21, label: '9pm', '2024': 734, '2025': 1059, '2026': 1260 },
+  { hour: 22, label: '10pm', '2024': 576, '2025': 741, '2026': 806 },
+  { hour: 23, label: '11pm', '2024': 320, '2025': 333, '2026': 418 },
 ];
 
 // Calcular el máximo valor para el heatmap
@@ -280,4 +280,78 @@ export const getMaxHeatmapValue = (year: YearType): number => {
 // Calcular intensidad del color para heatmap (0-1)
 export const getHeatmapIntensity = (value: number, max: number): number => {
   return Math.min(value / max, 1);
+};
+
+// ========== METADATA DINÁMICO (calculado automáticamente) ==========
+
+// Calcular dinámicamente el último día disponible
+export const lastAvailableDay = historicalData[historicalData.length - 1].day;
+
+// Calcular el total de días disponibles
+export const totalDaysAvailable = historicalData.length;
+
+// Calcular días restantes del mes
+export const remainingDays = 31 - lastAvailableDay;
+
+// Calcular dinámicamente weekday/weekend counts
+export const calculateDynamicWeekdayCount = (year: YearType): { weekdays: number; weekends: number } => {
+  const weekdayDays = historicalData.filter(d => !weekendDays[year].includes(d.day)).length;
+  const weekendDaysCount = historicalData.filter(d => weekendDays[year].includes(d.day)).length;
+  return { weekdays: weekdayDays, weekends: weekendDaysCount };
+};
+
+// Calcular dinámicamente los rangos de períodos
+export const calculatePeriodRanges = (): { arranque: number[]; medio: number[]; cierre: number[] } => {
+  // Primera semana: días 1-7
+  const arranqueEnd = Math.min(7, lastAvailableDay);
+  const arranque = Array.from({ length: arranqueEnd }, (_, i) => i + 1);
+  
+  // Segunda semana: días 8-14
+  const medioStart = 8;
+  const medioEnd = Math.min(14, lastAvailableDay);
+  const medio = medioStart <= lastAvailableDay 
+    ? Array.from({ length: Math.max(0, medioEnd - medioStart + 1) }, (_, i) => i + medioStart)
+    : [];
+  
+  // Tercera semana en adelante: días 15+
+  const cierreStart = 15;
+  const cierre = cierreStart <= lastAvailableDay
+    ? Array.from({ length: lastAvailableDay - cierreStart + 1 }, (_, i) => i + cierreStart)
+    : [];
+  
+  return { arranque, medio, cierre };
+};
+
+// Encontrar el máximo histórico de todos los años
+export const getHistoricalMax = (): { value: number; day: number; year: YearType } => {
+  let max = { value: 0, day: 1, year: '2024' as YearType };
+  
+  // Buscar en datos disponibles del mes actual
+  historicalData.forEach(d => {
+    (['2024', '2025', '2026'] as const).forEach(year => {
+      if (d[year] > max.value) {
+        max = { value: d[year], day: d.day, year };
+      }
+    });
+  });
+  
+  // También verificar datos completos de meses anteriores
+  Object.entries(historicalDataFull2024).forEach(([day, value]) => {
+    if (value > max.value) {
+      max = { value, day: parseInt(day), year: '2024' };
+    }
+  });
+  
+  Object.entries(historicalDataFull2025).forEach(([day, value]) => {
+    if (value > max.value) {
+      max = { value, day: parseInt(day), year: '2025' };
+    }
+  });
+  
+  return max;
+};
+
+// Formatear fecha en español
+export const formatDayMonth = (day: number, month: string = 'Enero'): string => {
+  return `${day} de ${month}`;
 };

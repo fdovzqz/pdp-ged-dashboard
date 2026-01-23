@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Target, Shield, Zap, TrendingUp, BarChart2 } from 'lucide-react';
 import { ForecastBadge, YearBadge, CustomTooltip } from '../ui';
-import { generateForecast, calculateForecastTotals, fullMonthTotals } from '../../data/historicalData';
+import { generateForecast, calculateForecastTotals, fullMonthTotals, lastAvailableDay } from '../../data/historicalData';
 import { FORECAST_COLORS, YEAR_COLORS, type ForecastType, type YearType } from '../../types';
 
 type ViewMode = 'daily' | 'accumulated';
@@ -74,7 +74,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
             Proyección de Cierre de Mes
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Forecast para días 22-31
+            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Forecast para días {lastAvailableDay + 1}-31
           </p>
         </div>
         
@@ -178,7 +178,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
             <Tooltip content={<CustomTooltip />} />
             
             <ReferenceLine
-              x={21}
+              x={lastAvailableDay}
               stroke="#fbbf24"
               strokeDasharray="5 5"
               label={{

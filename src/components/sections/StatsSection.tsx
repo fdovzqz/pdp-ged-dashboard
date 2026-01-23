@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { Calendar, Activity } from 'lucide-react';
-import { calculateWeekdayStats, calculatePeriodStats } from '../../data/historicalData';
+import { calculateWeekdayStats, calculatePeriodStats, calculateDynamicWeekdayCount, calculatePeriodRanges } from '../../data/historicalData';
 import { YEAR_COLORS, type YearType } from '../../types';
 
 export const StatsSection = () => {
   const weekdayStats = calculateWeekdayStats();
   const periodStats = calculatePeriodStats();
+  const periodRanges = calculatePeriodRanges();
   const years: YearType[] = ['2024', '2025', '2026'];
 
   return (
@@ -36,22 +37,22 @@ export const StatsSection = () => {
               </span>
               
               <div className="bg-slate-700/40 rounded-lg p-4">
-                <div className="text-xs text-slate-400 mb-1">L-V (15 días)</div>
+                <div className="text-xs text-slate-400 mb-1">L-V ({calculateDynamicWeekdayCount(year).weekdays} días)</div>
                 <div className="font-bold text-white text-lg">
                   {weekdayStats[year].weekday.toLocaleString()}
                 </div>
                 <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                  Ø {Math.round(weekdayStats[year].weekday / 15).toLocaleString()}/día
+                  Ø {Math.round(weekdayStats[year].weekday / calculateDynamicWeekdayCount(year).weekdays).toLocaleString()}/día
                 </div>
               </div>
               
               <div className="bg-slate-700/40 rounded-lg p-4">
-                <div className="text-xs text-slate-400 mb-1">S-D (6 días)</div>
+                <div className="text-xs text-slate-400 mb-1">S-D ({calculateDynamicWeekdayCount(year).weekends} días)</div>
                 <div className="font-bold text-white text-lg">
                   {weekdayStats[year].weekend.toLocaleString()}
                 </div>
                 <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                  Ø {Math.round(weekdayStats[year].weekend / 6).toLocaleString()}/día
+                  Ø {Math.round(weekdayStats[year].weekend / calculateDynamicWeekdayCount(year).weekends).toLocaleString()}/día
                 </div>
               </div>
             </div>
@@ -85,32 +86,32 @@ export const StatsSection = () => {
               </span>
               
               <div className="bg-slate-700/40 rounded-lg p-4">
-                <div className="text-[11px] text-slate-400 mb-1">Sem 1 (1-7)</div>
+                <div className="text-[11px] text-slate-400 mb-1">Sem 1 ({periodRanges.arranque[0]}-{periodRanges.arranque[periodRanges.arranque.length - 1]})</div>
                 <div className="font-bold text-white">
                   {periodStats[year].arranque.toLocaleString()}
                 </div>
                 <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                  Ø {Math.round(periodStats[year].arranque / 7).toLocaleString()}/día
+                  Ø {Math.round(periodStats[year].arranque / periodRanges.arranque.length).toLocaleString()}/día
                 </div>
               </div>
               
               <div className="bg-slate-700/40 rounded-lg p-4">
-                <div className="text-[11px] text-slate-400 mb-1">Sem 2 (8-14)</div>
+                <div className="text-[11px] text-slate-400 mb-1">Sem 2 ({periodRanges.medio.length > 0 ? `${periodRanges.medio[0]}-${periodRanges.medio[periodRanges.medio.length - 1]}` : 'N/A'})</div>
                 <div className="font-bold text-white">
                   {periodStats[year].medio.toLocaleString()}
                 </div>
                 <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                  Ø {Math.round(periodStats[year].medio / 7).toLocaleString()}/día
+                  Ø {periodRanges.medio.length > 0 ? Math.round(periodStats[year].medio / periodRanges.medio.length).toLocaleString() : '0'}/día
                 </div>
               </div>
               
               <div className="bg-slate-700/40 rounded-lg p-4">
-                <div className="text-[11px] text-slate-400 mb-1">Sem 3 (15-21)</div>
+                <div className="text-[11px] text-slate-400 mb-1">Sem 3+ ({periodRanges.cierre.length > 0 ? `${periodRanges.cierre[0]}-${periodRanges.cierre[periodRanges.cierre.length - 1]}` : 'N/A'})</div>
                 <div className="font-bold text-white">
                   {periodStats[year].cierre.toLocaleString()}
                 </div>
                 <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                  Ø {Math.round(periodStats[year].cierre / 7).toLocaleString()}/día
+                  Ø {periodRanges.cierre.length > 0 ? Math.round(periodStats[year].cierre / periodRanges.cierre.length).toLocaleString() : '0'}/día
                 </div>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Building2, Activity, Calendar, Clock, Zap, Download, Maximize2 } from 'lucide-react';
+import { lastAvailableDay, formatDayMonth } from '../../data/historicalData';
 
 interface HeaderProps {
   onExport?: () => void;
@@ -58,7 +59,7 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
             <Clock size={18} className="text-amber-500" />
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">Corte</p>
-              <p className="font-semibold text-white">21 de Enero, 2026</p>
+              <p className="font-semibold text-white">{formatDayMonth(lastAvailableDay)}, 2026</p>
             </div>
           </div>
 
