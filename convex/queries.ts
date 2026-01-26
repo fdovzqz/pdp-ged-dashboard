@@ -373,7 +373,7 @@ export const getIntradayData = query({
 function calculateIntradayForecast(
   currentTotal: number,
   currentHour: number,
-  currentDay: number,
+  _currentDay: number, // Prefijo _ para indicar que es intencional
   historical2024: number,
   historical2025: number
 ): { conservador: number; probable: number; optimista: number } {
