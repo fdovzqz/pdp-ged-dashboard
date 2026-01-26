@@ -8,7 +8,7 @@ import type {
   HourlyData,
 } from '../types';
 
-// Datos históricos reales de Enero (Días 1-22) - Actualizados desde CSV (UTC-6 México)
+// Datos históricos reales de Enero (Días 1-25) - Actualizados desde CSV (UTC-6 México)
 export const historicalData: DailyData[] = [
   { day: 1, '2024': 8, '2025': 180, '2026': 454 },
   { day: 2, '2024': 724, '2025': 1492, '2026': 2147 },
@@ -32,23 +32,26 @@ export const historicalData: DailyData[] = [
   { day: 20, '2024': 446, '2025': 1290, '2026': 2627 },
   { day: 21, '2024': 279, '2025': 1341, '2026': 1909 },
   { day: 22, '2024': 1344, '2025': 1535, '2026': 1904 },
+  { day: 23, '2024': 1629, '2025': 1387, '2026': 1650 },
+  { day: 24, '2024': 2568, '2025': 1181, '2026': 992 },
+  { day: 25, '2024': 1483, '2025': 654, '2026': 865 },
 ];
 
-// Totales hasta el día 22 - Actualizados desde CSV (UTC-6 México)
+// Totales hasta el día 25 - Actualizados desde CSV (UTC-6 México)
 export const totals = {
-  '2024': 22270,
-  '2025': 26675,
-  '2026': 31063,
+  '2024': 27950,
+  '2025': 29897,
+  '2026': 34570,
 };
 
 // Promedios diarios
 export const dailyAverages = {
-  '2024': Math.round(totals['2024'] / 22),
-  '2025': Math.round(totals['2025'] / 22),
-  '2026': Math.round(totals['2026'] / 22),
+  '2024': Math.round(totals['2024'] / 25),
+  '2025': Math.round(totals['2025'] / 25),
+  '2026': Math.round(totals['2026'] / 25),
 };
 
-// Días de fin de semana por año (hasta día 22)
+// Días de fin de semana por año (hasta día 25)
 // Enero 2024: Día 1 = Lunes -> Sáb=6,13,20 Dom=7,14,21
 // Enero 2025: Día 1 = Miércoles -> Sáb=4,11,18 Dom=5,12,19
 // Enero 2026: Día 1 = Jueves -> Sáb=3,10,17 Dom=4,11,18
@@ -58,11 +61,11 @@ export const weekendDays: Record<YearType, number[]> = {
   '2026': [3, 4, 10, 11, 17, 18], // Sáb: 3,10,17 | Dom: 4,11,18
 };
 
-// Calcular cantidad de días L-V y S-D hasta el día 22 para cada año
+// Calcular cantidad de días L-V y S-D hasta el día 25 para cada año
 export const weekdayCount: Record<YearType, { weekdays: number; weekends: number }> = {
-  '2024': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es lunes)
-  '2025': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es miércoles)
-  '2026': { weekdays: 16, weekends: 6 }, // L-V: 16 días, S-D: 6 días (día 22 es jueves)
+  '2024': { weekdays: 19, weekends: 6 }, // L-V: 19 días, S-D: 6 días (día 25 es jueves)
+  '2025': { weekdays: 19, weekends: 6 }, // L-V: 19 días, S-D: 6 días (día 25 es sábado)
+  '2026': { weekdays: 19, weekends: 6 }, // L-V: 19 días, S-D: 6 días (día 25 es domingo)
 };
 
 // Nombres de días de la semana
@@ -103,7 +106,7 @@ export const calculateWeekdayStats = (): Record<YearType, WeekdayStats> => {
   return stats as Record<YearType, WeekdayStats>;
 };
 
-// Estadísticas por período del mes (solo hasta día 22)
+// Estadísticas por período del mes (hasta día 25)
 // Arranque: días 1-7, Medio: días 8-14, Cierre: días 15-21
 export const calculatePeriodStats = (): Record<YearType, PeriodStats> => {
   const stats: Record<string, PeriodStats> = {};
@@ -150,11 +153,11 @@ export const fullMonthTotals = {
   '2025': totals['2025'] + total2025Days22to31, // 26,675 + 20,128 = 46,803
 };
 
-// Generar proyecciones para días 22-31
+// Generar proyecciones para días 26-31
 export const generateForecast = (): ForecastData[] => {
   const result: ForecastData[] = [];
 
-  // Agregar datos actuales (días 1-21)
+  // Agregar datos actuales (días 1-25)
   historicalData.forEach((d) => {
     result.push({
       day: d.day,
@@ -167,7 +170,8 @@ export const generateForecast = (): ForecastData[] => {
     });
   });
 
-  // Proyecciones para días 23-31 (basadas en datos reales de 2024 y 2025)
+  // Proyecciones para días 26-31 (basadas en datos reales de 2024 y 2025)
+  // Nota: Días 23-25 ahora tienen datos reales de 2026
   // 2024: 23=1629, 24=2568, 25=1483, 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
   // 2025: 23=1387, 24=1181, 25=654, 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
   const baseProjections = [
@@ -244,32 +248,32 @@ export const generateHeatmapData = (year: YearType): HeatmapData[] => {
   return data;
 };
 
-// Datos de distribución por hora - Actualizados desde CSV (UTC-6 México, días 1-22)
+// Datos de distribución por hora - Actualizados desde CSV (UTC-6 México, días 1-25)
 export const hourlyDistribution: HourlyData[] = [
-  { hour: 0, label: '12am', '2024': 123, '2025': 157, '2026': 316 },
-  { hour: 1, label: '1am', '2024': 45, '2025': 52, '2026': 304 },
-  { hour: 2, label: '2am', '2024': 22, '2025': 25, '2026': 36 },
-  { hour: 3, label: '3am', '2024': 2, '2025': 58, '2026': 21 },
-  { hour: 4, label: '4am', '2024': 6, '2025': 15, '2026': 14 },
-  { hour: 5, label: '5am', '2024': 6, '2025': 17, '2026': 28 },
-  { hour: 6, label: '6am', '2024': 12, '2025': 59, '2026': 57 },
-  { hour: 7, label: '7am', '2024': 95, '2025': 211, '2026': 199 },
-  { hour: 8, label: '8am', '2024': 414, '2025': 746, '2026': 796 },
-  { hour: 9, label: '9am', '2024': 1103, '2025': 1463, '2026': 1601 },
-  { hour: 10, label: '10am', '2024': 1848, '2025': 2030, '2026': 2299 },
-  { hour: 11, label: '11am', '2024': 2342, '2025': 2621, '2026': 2917 },
-  { hour: 12, label: '12pm', '2024': 2475, '2025': 2739, '2026': 3192 },
-  { hour: 13, label: '1pm', '2024': 2375, '2025': 2646, '2026': 2814 },
-  { hour: 14, label: '2pm', '2024': 2097, '2025': 2049, '2026': 2502 },
-  { hour: 15, label: '3pm', '2024': 1823, '2025': 1865, '2026': 2342 },
-  { hour: 16, label: '4pm', '2024': 1602, '2025': 1912, '2026': 2137 },
-  { hour: 17, label: '5pm', '2024': 1296, '2025': 1838, '2026': 2239 },
-  { hour: 18, label: '6pm', '2024': 1077, '2025': 1472, '2026': 1804 },
-  { hour: 19, label: '7pm', '2024': 972, '2025': 1373, '2026': 1555 },
-  { hour: 20, label: '8pm', '2024': 905, '2025': 1194, '2026': 1406 },
-  { hour: 21, label: '9pm', '2024': 734, '2025': 1059, '2026': 1260 },
-  { hour: 22, label: '10pm', '2024': 576, '2025': 741, '2026': 806 },
-  { hour: 23, label: '11pm', '2024': 320, '2025': 333, '2026': 418 },
+  { hour: 0, label: '12am', '2024': 133, '2025': 185, '2026': 340 },
+  { hour: 1, label: '1am', '2024': 50, '2025': 61, '2026': 321 },
+  { hour: 2, label: '2am', '2024': 22, '2025': 32, '2026': 42 },
+  { hour: 3, label: '3am', '2024': 3, '2025': 60, '2026': 23 },
+  { hour: 4, label: '4am', '2024': 9, '2025': 20, '2026': 14 },
+  { hour: 5, label: '5am', '2024': 9, '2025': 22, '2026': 35 },
+  { hour: 6, label: '6am', '2024': 27, '2025': 63, '2026': 63 },
+  { hour: 7, label: '7am', '2024': 136, '2025': 232, '2026': 220 },
+  { hour: 8, label: '8am', '2024': 546, '2025': 825, '2026': 880 },
+  { hour: 9, label: '9am', '2024': 1418, '2025': 1639, '2026': 1748 },
+  { hour: 10, label: '10am', '2024': 2228, '2025': 2282, '2026': 2549 },
+  { hour: 11, label: '11am', '2024': 2838, '2025': 2951, '2026': 3260 },
+  { hour: 12, label: '12pm', '2024': 3062, '2025': 3068, '2026': 3544 },
+  { hour: 13, label: '1pm', '2024': 3174, '2025': 2978, '2026': 3121 },
+  { hour: 14, label: '2pm', '2024': 2455, '2025': 2343, '2026': 2799 },
+  { hour: 15, label: '3pm', '2024': 2156, '2025': 2107, '2026': 2600 },
+  { hour: 16, label: '4pm', '2024': 2460, '2025': 2143, '2026': 2375 },
+  { hour: 17, label: '5pm', '2024': 1624, '2025': 2016, '2026': 2462 },
+  { hour: 18, label: '6pm', '2024': 1319, '2025': 1649, '2026': 1994 },
+  { hour: 19, label: '7pm', '2024': 1176, '2025': 1548, '2026': 1771 },
+  { hour: 20, label: '8pm', '2024': 1091, '2025': 1327, '2026': 1618 },
+  { hour: 21, label: '9pm', '2024': 922, '2025': 1154, '2026': 1413 },
+  { hour: 22, label: '10pm', '2024': 702, '2025': 809, '2026': 916 },
+  { hour: 23, label: '11pm', '2024': 390, '2025': 383, '2026': 462 },
 ];
 
 // Calcular el máximo valor para el heatmap
