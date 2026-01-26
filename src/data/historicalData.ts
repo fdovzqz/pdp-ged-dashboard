@@ -171,13 +171,10 @@ export const generateForecast = (): ForecastData[] => {
   });
 
   // Proyecciones para días 26-31 (basadas en datos reales de 2024 y 2025)
-  // Nota: Días 23-25 ahora tienen datos reales de 2026
-  // 2024: 23=1629, 24=2568, 25=1483, 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
-  // 2025: 23=1387, 24=1181, 25=654, 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
+  // Nota: Días 23-25 ahora tienen datos reales de 2026, por lo que solo proyectamos días 26-31
+  // 2024: 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
+  // 2025: 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
   const baseProjections = [
-    { day: 23, conservador: 1400, probable: 1650, optimista: 1900 },
-    { day: 24, conservador: 1200, probable: 1800, optimista: 2600 },
-    { day: 25, conservador: 700, probable: 1100, optimista: 1500 },
     { day: 26, conservador: 700, probable: 1200, optimista: 1700 },
     { day: 27, conservador: 1500, probable: 2200, optimista: 2800 },
     { day: 28, conservador: 2000, probable: 3200, optimista: 4000 },
@@ -202,16 +199,17 @@ export const generateForecast = (): ForecastData[] => {
 
 // Calcular totales de proyección
 export const calculateForecastTotals = (forecastData: ForecastData[]) => {
+  // Solo sumar proyecciones desde el día 26 en adelante (índice 25)
   return {
     conservador:
       totals['2026'] +
-      forecastData.slice(22).reduce((sum, d) => sum + d.conservador, 0),
+      forecastData.slice(25).reduce((sum, d) => sum + d.conservador, 0),
     probable:
       totals['2026'] +
-      forecastData.slice(22).reduce((sum, d) => sum + d.probable, 0),
+      forecastData.slice(25).reduce((sum, d) => sum + d.probable, 0),
     optimista:
       totals['2026'] +
-      forecastData.slice(22).reduce((sum, d) => sum + d.optimista, 0),
+      forecastData.slice(25).reduce((sum, d) => sum + d.optimista, 0),
   };
 };
 
