@@ -143,14 +143,19 @@ const historicalDataFull2025: Record<number, number> = {
   27: 2003, 28: 2991, 29: 3116, 30: 3486, 31: 4639,
 };
 
-// Calcular totales de días 22-31
-const total2024Days22to31 = Object.values(historicalDataFull2024).reduce((a, b) => a + b, 0);
-const total2025Days22to31 = Object.values(historicalDataFull2025).reduce((a, b) => a + b, 0);
+// Calcular totales de días 26-31 (solo los días que faltan después del último día disponible)
+const total2024Days26to31 = [26, 27, 28, 29, 30, 31]
+  .map(day => historicalDataFull2024[day] || 0)
+  .reduce((a, b) => a + b, 0);
+const total2025Days26to31 = [26, 27, 28, 29, 30, 31]
+  .map(day => historicalDataFull2025[day] || 0)
+  .reduce((a, b) => a + b, 0);
 
 // Totales completos de enero (días 1-31) - Actualizados desde CSV (UTC-6 México)
+// totals ya incluye días 1-25, solo sumamos días 26-31
 export const fullMonthTotals = {
-  '2024': totals['2024'] + total2024Days22to31, // 22,270 + 23,201 = 45,471
-  '2025': totals['2025'] + total2025Days22to31, // 26,675 + 20,128 = 46,803
+  '2024': totals['2024'] + total2024Days26to31,
+  '2025': totals['2025'] + total2025Days26to31,
 };
 
 // Generar proyecciones para días 26-31
