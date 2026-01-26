@@ -7,11 +7,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fetch-today": "node scripts/fetchCloudWatch.js",
+    "update-data": "npm run fetch-today && node scripts/processCSV.js"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.975.0",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
+    "dotenv": "^17.2.3",
     "framer-motion": "^12.28.1",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.0.0",

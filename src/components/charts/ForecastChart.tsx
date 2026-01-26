@@ -14,6 +14,8 @@ import {
 import { Target, Shield, Zap, TrendingUp, BarChart2 } from 'lucide-react';
 import { ForecastBadge, YearBadge, CustomTooltip } from '../ui';
 import { generateForecast, calculateForecastTotals, fullMonthTotals, lastAvailableDay } from '../../data/historicalData';
+import { getIntradayData } from '../../data/intradayData';
+import { todayIntradayData } from '../../data/today-intraday';
 import { FORECAST_COLORS, YEAR_COLORS, type ForecastType, type YearType } from '../../types';
 
 type ViewMode = 'daily' | 'accumulated';
@@ -27,7 +29,23 @@ interface ForecastChartProps {
 
 export const ForecastChart = memo(function ForecastChart({ activeForecast, onToggleForecast, activeYears, onToggleYear }: ForecastChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
-  const forecastData = useMemo(() => generateForecast(), []);
+  
+  // Obtener proyección intradía si está disponible
+  const intradayProjection = useMemo(() => {
+    const intradayData = getIntradayData(todayIntradayData);
+    if (intradayData) {
+      return {
+        day: intradayData.currentDay,
+        conservador: intradayData.forecast.conservador,
+        probable: intradayData.forecast.probable,
+        optimista: intradayData.forecast.optimista,
+      };
+    }
+    return null;
+  }, []);
+  
+  // Pasar proyección intradía a generateForecast para sincronizar
+  const forecastData = useMemo(() => generateForecast(intradayProjection), [intradayProjection]);
   const forecastTotals = useMemo(() => calculateForecastTotals(forecastData), [forecastData]);
 
   // Calculate accumulated data
@@ -189,39 +207,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
               }}
             />
 
-            {activeForecast.includes('optimista') && (
-              <Area
-                name="Optimista"
-                type="monotone"
-                dataKey="optimista"
-                stroke={FORECAST_COLORS.optimista}
-                strokeWidth={2}
-                fill="url(#gradientOptimista)"
-              />
-            )}
-            
-            {activeForecast.includes('probable') && (
-              <Area
-                name="Probable"
-                type="monotone"
-                dataKey="probable"
-                stroke={FORECAST_COLORS.probable}
-                strokeWidth={2}
-                fill="url(#gradientProbable)"
-              />
-            )}
-            
-            {activeForecast.includes('conservador') && (
-              <Area
-                name="Conservador"
-                type="monotone"
-                dataKey="conservador"
-                stroke={FORECAST_COLORS.conservador}
-                strokeWidth={2}
-                fill="url(#gradientConservador)"
-              />
-            )}
-
+            {/* Años históricos primero (líneas sólidas) */}
             {activeYears.includes('2024') && (
               <Line
                 name="2024"
@@ -244,6 +230,44 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
               />
             )}
 
+            {/* Forecasts después (líneas punteadas más gruesas) */}
+            {activeForecast.includes('conservador') && (
+              <Area
+                name="Conservador"
+                type="monotone"
+                dataKey="conservador"
+                stroke={FORECAST_COLORS.conservador}
+                strokeWidth={3}
+                strokeDasharray="8 4"
+                fill="url(#gradientConservador)"
+              />
+            )}
+            
+            {activeForecast.includes('probable') && (
+              <Area
+                name="Probable"
+                type="monotone"
+                dataKey="probable"
+                stroke={FORECAST_COLORS.probable}
+                strokeWidth={3}
+                strokeDasharray="8 4"
+                fill="url(#gradientProbable)"
+              />
+            )}
+            
+            {activeForecast.includes('optimista') && (
+              <Area
+                name="Optimista"
+                type="monotone"
+                dataKey="optimista"
+                stroke={FORECAST_COLORS.optimista}
+                strokeWidth={3}
+                strokeDasharray="8 4"
+                fill="url(#gradientOptimista)"
+              />
+            )}
+
+            {/* Actual 2026 al final (línea sólida blanca encima) */}
             <Line
               name="Actual 2026"
               type="monotone"

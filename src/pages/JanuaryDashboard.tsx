@@ -14,7 +14,8 @@ import {
   NotesSection, 
   InsightsSection, 
   AccumulatedSection,
-  StatsSection
+  StatsSection,
+  IntradaySection
 } from '../components/sections';
 
 // Hooks
@@ -30,6 +31,8 @@ import {
   formatDayMonth,
   getHistoricalMax
 } from '../data/historicalData';
+import { getIntradayData } from '../data/intradayData';
+import { todayIntradayData } from '../data/today-intraday';
 
 // Types
 import type { ForecastType, YearType } from '../types';
@@ -39,19 +42,31 @@ export const JanuaryDashboard = () => {
   const [activeYears, toggleYear] = useToggleState<YearType>(['2024', '2025', '2026']);
   const [activeForecast, toggleForecast] = useToggleState<ForecastType>(['probable']);
 
+  // Obtener datos intradía para el total actualizado
+  const intradayData = useMemo(() => getIntradayData(todayIntradayData), []);
+  const intradayTotal = intradayData?.statistics.currentTotal || 0;
+
   // Memoized KPI data
   const kpiData = useMemo(() => {
     const historicalMax = getHistoricalMax();
+    // Total 2026 = días completos + intradía actual
+    const totalWithIntraday = totals['2026'] + intradayTotal;
+    // Calcular crecimiento actualizado vs 2025
+    const growthVs2025WithIntraday = (((totalWithIntraday / totals['2025']) - 1) * 100).toFixed(1);
+    
     return {
-      totalEvents: totals['2026'].toLocaleString(),
+      totalEvents: totalWithIntraday.toLocaleString(),
+      totalEventsSubtitle: intradayTotal > 0 
+        ? `YTD al ${formatDayMonth(lastAvailableDay)} + intradía` 
+        : `YTD al ${formatDayMonth(lastAvailableDay)}`,
       biannualGrowth: `+${growth24vs26}%`,
       dailyAverage: dailyAverages['2026'].toLocaleString(),
       prevDailyAverage: dailyAverages['2025'].toLocaleString(),
-      growthVs2025: `+${growth25vs26}%`,
+      growthVs2025: intradayTotal > 0 ? `+${growthVs2025WithIntraday}%` : `+${growth25vs26}%`,
       maxValue: historicalMax.value.toLocaleString(),
       maxDate: `${historicalMax.day} de Enero ${historicalMax.year}`,
     };
-  }, []);
+  }, [intradayTotal]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -85,7 +100,7 @@ export const JanuaryDashboard = () => {
         <KPICard
           title="Total Pagos 2026"
           value={kpiData.totalEvents}
-          subtitle={`YTD al ${formatDayMonth(lastAvailableDay)}`}
+          subtitle={kpiData.totalEventsSubtitle}
           icon={BarChart3}
           trend="up"
           trendValue={kpiData.growthVs2025}
@@ -110,6 +125,9 @@ export const JanuaryDashboard = () => {
           icon={Award}
         />
       </motion.div>
+
+      {/* Intraday Section - Solo se muestra si hay datos del día actual */}
+      <IntradaySection />
 
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

@@ -158,9 +158,33 @@ export const fullMonthTotals = {
   '2025': totals['2025'] + total2025Days26to31,
 };
 
-// Generar proyecciones para días 26-31
-export const generateForecast = (): ForecastData[] => {
+// Calcular factor de crecimiento de 2026 vs años anteriores (basado en días 1-25)
+const calculateGrowthFactor = (): number => {
+  const avg2024_2025 = (totals['2024'] + totals['2025']) / 2;
+  return totals['2026'] / avg2024_2025;
+};
+
+// Determinar si un día es fin de semana en 2026
+// Enero 2026: Día 1 = Jueves -> Sáb=3,10,17,24,31 | Dom=4,11,18,25
+const isWeekend2026 = (day: number): boolean => {
+  const weekendDays2026 = [3, 4, 10, 11, 17, 18, 24, 25, 31];
+  return weekendDays2026.includes(day);
+};
+
+// Interface para proyecciones intradía
+interface IntradayProjection {
+  day: number;
+  conservador: number;
+  probable: number;
+  optimista: number;
+}
+
+// Generar proyecciones DINÁMICAS para días 26-31
+// Basadas en: históricos reales + factor de crecimiento de 2026 + día de la semana
+// Si hay proyección intradía disponible para el día actual, la usa en lugar de la estática
+export const generateForecast = (intradayProjection?: IntradayProjection | null): ForecastData[] => {
   const result: ForecastData[] = [];
+  const growthFactor = calculateGrowthFactor(); // ~1.19 (2026 crece ~19% vs promedio 2024-2025)
 
   // Agregar datos actuales (días 1-25)
   historicalData.forEach((d) => {
@@ -175,29 +199,50 @@ export const generateForecast = (): ForecastData[] => {
     });
   });
 
-  // Proyecciones para días 26-31 (basadas en datos reales de 2024 y 2025)
-  // Nota: Días 23-25 ahora tienen datos reales de 2026, por lo que solo proyectamos días 26-31
-  // 2024: 26=1697, 27=1028, 28=815, 29=3373, 30=4318, 31=6290
-  // 2025: 26=671, 27=2003, 28=2991, 29=3116, 30=3486, 31=4639
-  const baseProjections = [
-    { day: 26, conservador: 700, probable: 1200, optimista: 1700 },
-    { day: 27, conservador: 1500, probable: 2200, optimista: 2800 },
-    { day: 28, conservador: 2000, probable: 3200, optimista: 4000 },
-    { day: 29, conservador: 3200, probable: 3800, optimista: 4500 },
-    { day: 30, conservador: 3600, probable: 4500, optimista: 5500 },
-    { day: 31, conservador: 4800, probable: 5800, optimista: 7000 },
-  ];
-
-  baseProjections.forEach((p) => {
+  // Proyecciones dinámicas para días 26-31
+  // Basadas en promedio histórico × factor de crecimiento
+  for (let day = 26; day <= 31; day++) {
+    const hist2024 = historicalDataFull2024[day] || 0;
+    const hist2025 = historicalDataFull2025[day] || 0;
+    
+    // Si hay proyección intradía para este día específico, usarla
+    if (intradayProjection && intradayProjection.day === day) {
+      result.push({
+        day,
+        conservador: intradayProjection.conservador,
+        probable: intradayProjection.probable,
+        optimista: intradayProjection.optimista,
+        '2024': hist2024,
+        '2025': hist2025,
+      });
+      continue;
+    }
+    
+    // Promedio histórico del día específico
+    const avgHistorical = (hist2024 + hist2025) / 2;
+    
+    // Aplicar factor de crecimiento de 2026
+    const baseProjection = Math.round(avgHistorical * growthFactor);
+    
+    // Ajustar por día de la semana si es necesario
+    // Los fines de semana tienden a ser más bajos
+    const isWeekend = isWeekend2026(day);
+    const weekendAdjustment = isWeekend ? 0.85 : 1.0; // Fines de semana ~15% menos
+    
+    // Calcular proyecciones con variabilidad
+    const probable = Math.round(baseProjection * weekendAdjustment);
+    const conservador = Math.round(probable * 0.85); // 15% menos
+    const optimista = Math.round(probable * 1.15);   // 15% más
+    
     result.push({
-      day: p.day,
-      conservador: p.conservador,
-      probable: p.probable,
-      optimista: p.optimista,
-      '2024': historicalDataFull2024[p.day],
-      '2025': historicalDataFull2025[p.day],
+      day,
+      conservador,
+      probable,
+      optimista,
+      '2024': hist2024,
+      '2025': hist2025,
     });
-  });
+  }
 
   return result;
 };
@@ -277,6 +322,62 @@ export const hourlyDistribution: HourlyData[] = [
   { hour: 21, label: '9pm', '2024': 922, '2025': 1154, '2026': 1413 },
   { hour: 22, label: '10pm', '2024': 702, '2025': 809, '2026': 916 },
   { hour: 23, label: '11pm', '2024': 390, '2025': 383, '2026': 462 },
+];
+
+// Distribución horaria para días de semana (L-V) - Actualizados desde CSV (UTC-6 México, días 1-25)
+export const hourlyDistributionWeekday: HourlyData[] = [
+  { hour: 0, label: '12am', '2024': 105, '2025': 153, '2026': 303 },
+  { hour: 1, label: '1am', '2024': 34, '2025': 44, '2026': 293 },
+  { hour: 2, label: '2am', '2024': 13, '2025': 28, '2026': 22 },
+  { hour: 3, label: '3am', '2024': 3, '2025': 58, '2026': 17 },
+  { hour: 4, label: '4am', '2024': 7, '2025': 14, '2026': 11 },
+  { hour: 5, label: '5am', '2024': 6, '2025': 20, '2026': 32 },
+  { hour: 6, label: '6am', '2024': 23, '2025': 56, '2026': 52 },
+  { hour: 7, label: '7am', '2024': 126, '2025': 215, '2026': 192 },
+  { hour: 8, label: '8am', '2024': 504, '2025': 754, '2026': 795 },
+  { hour: 9, label: '9am', '2024': 1327, '2025': 1522, '2026': 1560 },
+  { hour: 10, label: '10am', '2024': 2049, '2025': 2089, '2026': 2255 },
+  { hour: 11, label: '11am', '2024': 2593, '2025': 2634, '2026': 2743 },
+  { hour: 12, label: '12pm', '2024': 2782, '2025': 2695, '2026': 2939 },
+  { hour: 13, label: '1pm', '2024': 2909, '2025': 2609, '2026': 2557 },
+  { hour: 14, label: '2pm', '2024': 2229, '2025': 2069, '2026': 2241 },
+  { hour: 15, label: '3pm', '2024': 1957, '2025': 1823, '2026': 2144 },
+  { hour: 16, label: '4pm', '2024': 2304, '2025': 1812, '2026': 1999 },
+  { hour: 17, label: '5pm', '2024': 1460, '2025': 1768, '2026': 2077 },
+  { hour: 18, label: '6pm', '2024': 1157, '2025': 1426, '2026': 1641 },
+  { hour: 19, label: '7pm', '2024': 1058, '2025': 1328, '2026': 1385 },
+  { hour: 20, label: '8pm', '2024': 928, '2025': 1137, '2026': 1233 },
+  { hour: 21, label: '9pm', '2024': 811, '2025': 960, '2026': 1150 },
+  { hour: 22, label: '10pm', '2024': 590, '2025': 684, '2026': 735 },
+  { hour: 23, label: '11pm', '2024': 341, '2025': 319, '2026': 364 },
+];
+
+// Distribución horaria para fines de semana (S-D) - Actualizados desde CSV (UTC-6 México, días 1-25)
+export const hourlyDistributionWeekend: HourlyData[] = [
+  { hour: 0, label: '12am', '2024': 28, '2025': 32, '2026': 37 },
+  { hour: 1, label: '1am', '2024': 16, '2025': 17, '2026': 28 },
+  { hour: 2, label: '2am', '2024': 9, '2025': 4, '2026': 20 },
+  { hour: 3, label: '3am', '2024': 0, '2025': 2, '2026': 6 },
+  { hour: 4, label: '4am', '2024': 2, '2025': 6, '2026': 3 },
+  { hour: 5, label: '5am', '2024': 3, '2025': 2, '2026': 3 },
+  { hour: 6, label: '6am', '2024': 4, '2025': 7, '2026': 11 },
+  { hour: 7, label: '7am', '2024': 10, '2025': 17, '2026': 28 },
+  { hour: 8, label: '8am', '2024': 42, '2025': 71, '2026': 85 },
+  { hour: 9, label: '9am', '2024': 91, '2025': 117, '2026': 188 },
+  { hour: 10, label: '10am', '2024': 179, '2025': 193, '2026': 294 },
+  { hour: 11, label: '11am', '2024': 245, '2025': 317, '2026': 517 },
+  { hour: 12, label: '12pm', '2024': 280, '2025': 373, '2026': 605 },
+  { hour: 13, label: '1pm', '2024': 265, '2025': 369, '2026': 564 },
+  { hour: 14, label: '2pm', '2024': 226, '2025': 274, '2026': 558 },
+  { hour: 15, label: '3pm', '2024': 199, '2025': 284, '2026': 456 },
+  { hour: 16, label: '4pm', '2024': 156, '2025': 331, '2026': 376 },
+  { hour: 17, label: '5pm', '2024': 164, '2025': 248, '2026': 385 },
+  { hour: 18, label: '6pm', '2024': 162, '2025': 223, '2026': 353 },
+  { hour: 19, label: '7pm', '2024': 118, '2025': 220, '2026': 386 },
+  { hour: 20, label: '8pm', '2024': 163, '2025': 190, '2026': 385 },
+  { hour: 21, label: '9pm', '2024': 111, '2025': 194, '2026': 263 },
+  { hour: 22, label: '10pm', '2024': 112, '2025': 125, '2026': 181 },
+  { hour: 23, label: '11pm', '2024': 49, '2025': 64, '2026': 98 },
 ];
 
 // Calcular el máximo valor para el heatmap
