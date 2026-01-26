@@ -9,9 +9,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Clock } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import { CustomTooltip, YearBadge } from '../ui';
-import { hourlyDistribution, lastAvailableDay } from '../../data/historicalData';
 import { YEAR_COLORS, type YearType } from '../../types';
 
 interface HourlyChartProps {
@@ -20,6 +21,29 @@ interface HourlyChartProps {
 }
 
 export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear }: HourlyChartProps) {
+  // Obtener datos de distribución horaria desde Convex
+  const hourlyDistribution = useQuery(api.queries.getHourlyDistribution, {});
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+
+  // Loading state
+  if (hourlyDistribution === undefined || lastAvailableDay === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.35 }}
+        className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      >
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+            <p className="text-slate-400 text-sm">Cargando distribución horaria...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}

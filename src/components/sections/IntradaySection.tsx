@@ -12,73 +12,101 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Clock, TrendingUp, Target, Zap, AlertCircle } from 'lucide-react';
+import { Clock, TrendingUp, Target, Zap, AlertCircle, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import { CustomTooltip } from '../ui';
-import { getIntradayData, hasIntradayData, getHoursRemainingFormatted, type IntradayHourData } from '../../data/intradayData';
-import { todayIntradayData, lastExtractionTime } from '../../data/today-intraday';
 import { YEAR_COLORS } from '../../types';
 
-interface IntradaySectionProps {
-  todayHourlyData?: IntradayHourData[] | null;
-}
-
-export const IntradaySection = ({ todayHourlyData: propData = null }: IntradaySectionProps) => {
-  // Usar datos pasados como prop, o importar desde el archivo TypeScript generado
-  const loadedData = propData || todayIntradayData;
-
-  const intradayData = useMemo(() => getIntradayData(loadedData), [loadedData]);
-  const hasData = useMemo(() => hasIntradayData(), []);
-
-  // Si no hay datos intradía disponibles, no mostrar la sección
-  if (!hasData || !intradayData) {
-    return null;
+// Calcular horas restantes formateadas
+const getHoursRemainingFormatted = (hoursRemaining: number): string => {
+  if (hoursRemaining <= 0) {
+    return 'Día completo';
   }
+  return `${hoursRemaining} ${hoursRemaining === 1 ? 'hora' : 'horas'}`;
+};
 
-  const { currentDay, currentHour, todayData, historicalComparison, forecast, statistics } = intradayData;
+export const IntradaySection = () => {
+  // Obtener datos intradía desde Convex
+  const intradayData = useQuery(api.queries.getIntradayData);
+
+  // Extraer datos con valores por defecto para hooks
+  const todayData = intradayData?.todayData ?? [];
+  const currentHour = intradayData?.currentHour ?? 0;
+  const historicalComparison = intradayData?.historicalComparison ?? { '2024': 0, '2025': 0, '2026': 0 };
+  const forecast = intradayData?.forecast ?? { conservador: 0, probable: 0, optimista: 0 };
 
   // Encontrar la última hora con datos reales
   const lastHourWithData = todayData.length > 0 ? Math.max(...todayData.map(h => h.hour)) : 0;
 
   // Preparar datos para gráfico de barras por hora - solo hasta la última hora con datos
-  const hourlyChartData = Array.from({ length: lastHourWithData + 1 }, (_, i) => {
-    const hourData = todayData.find(h => h.hour === i);
-    return {
-      hour: i,
-      label: i === 0 ? '12am' : i < 12 ? `${i}am` : i === 12 ? '12pm' : `${i - 12}pm`,
-      today: hourData?.events || 0,
-      cumulative: hourData?.cumulative || 0,
-    };
-  });
+  const hourlyChartData = useMemo(() => {
+    if (todayData.length === 0) return [];
+    return Array.from({ length: lastHourWithData + 1 }, (_, i) => {
+      const hourData = todayData.find(h => h.hour === i);
+      return {
+        hour: i,
+        label: i === 0 ? '12am' : i < 12 ? `${i}am` : i === 12 ? '12pm' : `${i - 12}pm`,
+        today: hourData?.events || 0,
+        cumulative: hourData?.cumulative || 0,
+      };
+    });
+  }, [todayData, lastHourWithData]);
 
   // Preparar datos para gráfico acumulado comparativo
-  // Crear un array completo con todas las horas interpoladas
-  const cumulativeChartData = Array.from({ length: 24 }, (_, i) => {
-    let todayCumulative: number | null = null;
-    
-    if (i <= currentHour) {
-      // Buscar el último acumulado hasta esta hora
-      const dataUpToHour = todayData.filter(h => h.hour <= i);
-      if (dataUpToHour.length > 0) {
-        // Usar el último acumulado disponible hasta esta hora
-        todayCumulative = dataUpToHour[dataUpToHour.length - 1].cumulative;
-      } else {
-        // Si no hay datos todavía, usar 0
-        todayCumulative = 0;
+  const cumulativeChartData = useMemo(() => {
+    if (todayData.length === 0) return [];
+    return Array.from({ length: 24 }, (_, i) => {
+      let todayCumulative: number | null = null;
+      
+      if (i <= currentHour) {
+        // Buscar el último acumulado hasta esta hora
+        const dataUpToHour = todayData.filter(h => h.hour <= i);
+        if (dataUpToHour.length > 0) {
+          // Usar el último acumulado disponible hasta esta hora
+          todayCumulative = dataUpToHour[dataUpToHour.length - 1].cumulative;
+        } else {
+          // Si no hay datos todavía, usar 0
+          todayCumulative = 0;
+        }
       }
-    }
-    // Si i > currentHour, dejamos null (no mostrar línea futura)
 
-    return {
-      hour: i,
-      label: i === 0 ? '12am' : i < 12 ? `${i}am` : i === 12 ? '12pm' : `${i - 12}pm`,
-      '2026': todayCumulative,
-      // Líneas horizontales para totales históricos esperados del día
-      '2024': historicalComparison['2024'],
-      '2025': historicalComparison['2025'],
-      // Línea horizontal para proyección probable
-      'Proyección Probable': forecast.probable,
-    };
-  });
+      return {
+        hour: i,
+        label: i === 0 ? '12am' : i < 12 ? `${i}am` : i === 12 ? '12pm' : `${i - 12}pm`,
+        '2026': todayCumulative,
+        '2024': historicalComparison['2024'],
+        '2025': historicalComparison['2025'],
+        'Proyección Probable': forecast.probable,
+      };
+    });
+  }, [currentHour, todayData, historicalComparison, forecast]);
+
+  // Si los datos aún están cargando
+  if (intradayData === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      >
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+            <p className="text-slate-400 text-sm">Cargando datos intradía...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Si no hay datos intradía disponibles, no mostrar la sección
+  if (!intradayData) {
+    return null;
+  }
+
+  const { currentDay, hoursRemaining, statistics, lastExtraction } = intradayData;
 
   return (
     <motion.div
@@ -96,7 +124,10 @@ export const IntradaySection = ({ todayHourlyData: propData = null }: IntradaySe
             Seguimiento Intradía - Día {currentDay} de Enero
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            Progreso del día actual vs histórico · {getHoursRemainingFormatted()} restantes (extracción: {lastExtractionTime})
+            Progreso del día actual vs histórico · {getHoursRemainingFormatted(hoursRemaining)} restantes
+            {lastExtraction && (
+              <span className="text-emerald-400"> (extracción: {lastExtraction})</span>
+            )}
           </p>
         </div>
       </div>
@@ -274,7 +305,7 @@ export const IntradaySection = ({ todayHourlyData: propData = null }: IntradaySe
       <div className="mt-4 flex items-start gap-2 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
         <AlertCircle size={16} className="text-blue-400 mt-0.5 shrink-0" />
         <p className="text-xs text-blue-300">
-          Los datos se actualizan automáticamente desde CloudWatch. El día actual se excluye de los datos históricos hasta que esté completo (23:59 hora de México).
+          Los datos se actualizan automáticamente cada 5 minutos desde CloudWatch. El día actual se excluye de los datos históricos hasta que esté completo (23:59 hora de México).
         </p>
       </div>
     </motion.div>

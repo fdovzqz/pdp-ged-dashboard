@@ -1,7 +1,8 @@
 import { useMemo, useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar } from 'lucide-react';
-import { historicalData, getMaxHeatmapValue, lastAvailableDay } from '../../data/historicalData';
+import { Calendar, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import type { YearType } from '../../types';
 
 interface HeatmapChartProps {
@@ -25,12 +26,23 @@ const startDayOfWeek: Record<YearType, number> = {
 
 export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: HeatmapChartProps) {
   const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
-  const maxValue = useMemo(() => getMaxHeatmapValue(year), [year]);
+  
+  // Obtener datos del heatmap desde Convex
+  const heatmapData = useQuery(api.queries.getHeatmapData, { year: parseInt(year) });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+
+  // Calcular max value del heatmap
+  const maxValue = useMemo(() => {
+    if (!heatmapData || heatmapData.length === 0) return 1;
+    return Math.max(...heatmapData.map(d => d.value));
+  }, [heatmapData]);
   
   const dayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   
   // Generar la estructura del calendario
   const calendarGrid = useMemo(() => {
+    if (lastAvailableDay === undefined) return [];
+    
     const startDay = startDayOfWeek[year];
     const weeks: (number | null)[][] = [];
     let currentWeek: (number | null)[] = [];
@@ -60,7 +72,7 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
     }
     
     return weeks;
-  }, [year]);
+  }, [year, lastAvailableDay]);
   
   const getIntensityColor = (value: number): string => {
     const intensity = value / maxValue;
@@ -82,8 +94,9 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
   };
 
   const getDayValue = (day: number): number => {
-    const data = historicalData.find(d => d.day === day);
-    return data ? data[year] : 0;
+    if (!heatmapData) return 0;
+    const data = heatmapData.find(d => d.day === day);
+    return data ? data.value : 0;
   };
 
   const handleMouseEnter = (day: number, value: number, event: React.MouseEvent) => {
@@ -92,36 +105,30 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
     const parentRect = container?.getBoundingClientRect();
     
     if (parentRect) {
-      const tooltipWidth = 140; // Ancho aproximado del tooltip
-      const tooltipHeight = 60; // Alto aproximado del tooltip
-      const padding = 8; // Padding de seguridad
+      const tooltipWidth = 140;
+      const tooltipHeight = 60;
+      const padding = 8;
       
       const cellCenterX = rect.left - parentRect.left + rect.width / 2;
       const cellTop = rect.top - parentRect.top;
       const cellBottom = cellTop + rect.height;
       
-      // Determinar posición horizontal - asegurar que no se salga
       let x = cellCenterX;
       let placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
       
-      // Calcular límites del contenedor
       const containerLeft = padding;
       const containerRight = parentRect.width - padding;
       const tooltipHalfWidth = tooltipWidth / 2;
       
-      // Si el tooltip se sale por la derecha
       if (cellCenterX + tooltipHalfWidth > containerRight) {
         x = containerRight - tooltipHalfWidth;
       }
-      // Si el tooltip se sale por la izquierda
       else if (cellCenterX - tooltipHalfWidth < containerLeft) {
         x = containerLeft + tooltipHalfWidth;
       }
       
-      // Determinar posición vertical
       let y = cellTop - padding;
       
-      // Si no hay espacio arriba, mostrar abajo
       if (cellTop < tooltipHeight + padding) {
         y = cellBottom + padding;
         placement = 'bottom';
@@ -136,6 +143,25 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
       });
     }
   };
+
+  // Loading state
+  if (heatmapData === undefined || lastAvailableDay === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      >
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
+            <p className="text-slate-400 text-sm">Cargando mapa de calor...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

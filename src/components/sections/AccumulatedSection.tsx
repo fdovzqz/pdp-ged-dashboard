@@ -1,12 +1,28 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Calendar, BarChart3 } from 'lucide-react';
-import { historicalData, totals, lastAvailableDay, formatDayMonth } from '../../data/historicalData';
+import { TrendingUp, Calendar, BarChart3, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import { YEAR_COLORS, type YearType } from '../../types';
 
+// Helper para formatear fecha
+const formatDayMonth = (day: number, month: string = 'Enero'): string => {
+  return `${day} de ${month}`;
+};
+
 export const AccumulatedSection = () => {
+  // Obtener datos desde Convex
+  const historicalData = useQuery(api.queries.getHistoricalData);
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  // Usar totales hasta el día actual para comparación justa entre años
+  const totals = useQuery(api.queries.getTotalsUpToDay, 
+    lastAvailableDay !== undefined ? { maxDay: lastAvailableDay } : "skip"
+  );
+
   // Calculate accumulated data for each day
   const accumulatedData = useMemo(() => {
+    if (!historicalData) return [];
+    
     const result: { day: number; '2024': number; '2025': number; '2026': number }[] = [];
     let acc2024 = 0;
     let acc2025 = 0;
@@ -25,15 +41,43 @@ export const AccumulatedSection = () => {
     });
 
     return result;
-  }, []);
+  }, [historicalData]);
 
-  // Get the current day (day 21) data
-  const currentDayData = accumulatedData[accumulatedData.length - 1];
+  // Loading state
+  if (historicalData === undefined || totals === undefined || lastAvailableDay === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      >
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+            <p className="text-slate-400 text-sm">Cargando datos acumulados...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
-  // Calculate growth rates
-  const growth2025vs2024 = ((currentDayData['2025'] / currentDayData['2024'] - 1) * 100).toFixed(1);
-  const growth2026vs2025 = ((currentDayData['2026'] / currentDayData['2025'] - 1) * 100).toFixed(1);
-  const growth2026vs2024 = ((currentDayData['2026'] / currentDayData['2024'] - 1) * 100).toFixed(1);
+  // Get the current day data - usar el día específico que tenemos datos de 2026
+  // Para comparación justa, usamos el último día disponible de 2026
+  const currentDayData = accumulatedData.find(d => d.day === lastAvailableDay) || 
+    accumulatedData[accumulatedData.length - 1] || 
+    { '2024': 0, '2025': 0, '2026': 0 };
+
+  // Calculate growth rates usando los totales hasta el día actual
+  const growth2025vs2024 = totals['2024'] > 0
+    ? ((totals['2025'] / totals['2024'] - 1) * 100).toFixed(1)
+    : '0.0';
+  const growth2026vs2025 = totals['2025'] > 0
+    ? ((totals['2026'] / totals['2025'] - 1) * 100).toFixed(1)
+    : '0.0';
+  const growth2026vs2024 = totals['2024'] > 0
+    ? ((totals['2026'] / totals['2024'] - 1) * 100).toFixed(1)
+    : '0.0';
 
   const years: YearType[] = ['2024', '2025', '2026'];
 
@@ -128,7 +172,7 @@ export const AccumulatedSection = () => {
         <h4 className="text-sm font-semibold text-slate-400 mb-3">Comparativa visual</h4>
         <div className="space-y-3">
           {years.map((year) => {
-            const percentage = (totals[year] / totals['2026']) * 100;
+            const percentage = totals['2026'] > 0 ? (totals[year] / totals['2026']) * 100 : 0;
             return (
               <div key={year} className="flex items-center gap-4">
                 <span className="text-sm font-medium w-12" style={{ color: YEAR_COLORS[year] }}>

@@ -9,9 +9,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Layers, BarChart2, TrendingUp } from 'lucide-react';
+import { Layers, BarChart2, TrendingUp, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import { YearBadge, CustomTooltip } from '../ui';
-import { historicalData, lastAvailableDay } from '../../data/historicalData';
 import { YEAR_COLORS, type YearType } from '../../types';
 
 type ViewMode = 'daily' | 'accumulated';
@@ -24,8 +25,20 @@ interface HistoricalChartProps {
 export const HistoricalChart = memo(function HistoricalChart({ activeYears, onToggleYear }: HistoricalChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
+  // Obtener datos históricos desde Convex
+  const rawHistoricalData = useQuery(api.queries.getHistoricalData);
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+
+  // Filtrar datos hasta el último día disponible (para comparación justa)
+  const historicalData = useMemo(() => {
+    if (!rawHistoricalData || lastAvailableDay === undefined) return [];
+    return rawHistoricalData.filter(d => d.day <= lastAvailableDay);
+  }, [rawHistoricalData, lastAvailableDay]);
+
   // Calculate accumulated data
   const accumulatedData = useMemo(() => {
+    if (!historicalData || historicalData.length === 0) return [];
+    
     let acc2024 = 0;
     let acc2025 = 0;
     let acc2026 = 0;
@@ -41,7 +54,26 @@ export const HistoricalChart = memo(function HistoricalChart({ activeYears, onTo
         '2026': acc2026,
       };
     });
-  }, []);
+  }, [historicalData]);
+
+  // Loading state
+  if (rawHistoricalData === undefined || lastAvailableDay === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="col-span-2 bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+            <p className="text-slate-400 text-sm">Cargando datos históricos...</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   const chartData = viewMode === 'daily' ? historicalData : accumulatedData;
 

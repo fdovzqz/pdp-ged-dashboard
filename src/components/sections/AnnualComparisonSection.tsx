@@ -34,6 +34,51 @@ import {
 
 type ViewMode = 'monthly' | 'accumulated';
 
+// Tooltip personalizado - definido fuera del componente para evitar recreación en cada render
+const AnnualCustomTooltip = ({ active, payload, label }: {
+  active?: boolean;
+  payload?: Array<{ value: number; name: string; color: string }>;
+  label?: string;
+}) => {
+  if (active && payload && payload.length) {
+    const value2024 = payload.find(p => p.name === '2024')?.value || 0;
+    const value2025 = payload.find(p => p.name === '2025')?.value || 0;
+    const diff = value2025 - value2024;
+    const growthPct = value2024 > 0 ? ((value2025 - value2024) / value2024 * 100).toFixed(1) : '0';
+    
+    return (
+      <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-xl">
+        <p className="text-white font-semibold mb-3">{label}</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-pink-400 text-sm">2024:</span>
+            <span className="text-white font-medium">{value2024.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-violet-400 text-sm">2025:</span>
+            <span className="text-white font-medium">{value2025.toLocaleString()}</span>
+          </div>
+          <div className="pt-2 border-t border-slate-600/50">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-slate-400 text-sm">Diferencia:</span>
+              <span className={`font-medium ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {diff >= 0 ? '+' : ''}{diff.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-4 mt-1">
+              <span className="text-slate-400 text-sm">Cambio:</span>
+              <span className={`font-medium ${Number(growthPct) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {Number(growthPct) >= 0 ? '+' : ''}{growthPct}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export const AnnualComparisonSection = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
@@ -57,52 +102,6 @@ export const AnnualComparisonSection = () => {
       difference: m.accumulated2025 - m.accumulated2024,
     }));
   }, [viewMode]);
-
-  // Tooltip personalizado
-  const CustomTooltip = ({ active, payload, label }: {
-    active?: boolean;
-    payload?: Array<{ value: number; name: string; color: string }>;
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      const fullName = chartData.find(d => d.name === label)?.fullName || label;
-      const value2024 = payload.find(p => p.name === '2024')?.value || 0;
-      const value2025 = payload.find(p => p.name === '2025')?.value || 0;
-      const diff = value2025 - value2024;
-      const growthPct = value2024 > 0 ? ((value2025 - value2024) / value2024 * 100).toFixed(1) : '0';
-      
-      return (
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-xl">
-          <p className="text-white font-semibold mb-3">{fullName}</p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-pink-400 text-sm">2024:</span>
-              <span className="text-white font-medium">{value2024.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-violet-400 text-sm">2025:</span>
-              <span className="text-white font-medium">{value2025.toLocaleString()}</span>
-            </div>
-            <div className="pt-2 border-t border-slate-600/50">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-slate-400 text-sm">Diferencia:</span>
-                <span className={`font-medium ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {diff >= 0 ? '+' : ''}{diff.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 mt-1">
-                <span className="text-slate-400 text-sm">Cambio:</span>
-                <span className={`font-medium ${Number(growthPct) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Number(growthPct) >= 0 ? '+' : ''}{growthPct}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <motion.div
@@ -272,7 +271,7 @@ export const AnnualComparisonSection = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AnnualCustomTooltip />} />
                 <Legend />
                 <Bar dataKey="2024" fill={ANNUAL_YEAR_COLORS['2024']} radius={[4, 4, 0, 0]} name="2024" />
                 <Bar dataKey="2025" fill={ANNUAL_YEAR_COLORS['2025']} radius={[4, 4, 0, 0]} name="2025" />
@@ -292,7 +291,7 @@ export const AnnualComparisonSection = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AnnualCustomTooltip />} />
                 <Legend />
                 <Area 
                   type="monotone" 

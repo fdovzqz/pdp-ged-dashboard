@@ -8,13 +8,16 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "fetch-today": "node scripts/fetchCloudWatch.js",
-    "update-data": "npm run fetch-today && node scripts/processCSV.js"
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "convex:seed": "convex run seedData:seedAllData",
+    "convex:clear": "convex run seedData:clearAllData"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.975.0",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
+    "convex": "^1.31.6",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.28.1",
     "html-to-image": "^1.11.13",

@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Activity, Award, Info } from 'lucide-react';
+import { BarChart3, TrendingUp, Activity, Award, Info, Loader2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 // Components
 import { KPICard } from '../components/ui';
@@ -21,52 +23,70 @@ import {
 // Hooks
 import { useToggleState } from '../hooks';
 
-// Data
-import { 
-  totals, 
-  dailyAverages, 
-  growth25vs26, 
-  growth24vs26,
-  lastAvailableDay,
-  formatDayMonth,
-  getHistoricalMax
-} from '../data/historicalData';
-import { getIntradayData } from '../data/intradayData';
-import { todayIntradayData } from '../data/today-intraday';
-
 // Types
 import type { ForecastType, YearType } from '../types';
+
+// Helper para formatear fecha
+const formatDayMonth = (day: number, month: string = 'Enero'): string => {
+  return `${day} de ${month}`;
+};
 
 export const JanuaryDashboard = () => {
   // State using custom hooks
   const [activeYears, toggleYear] = useToggleState<YearType>(['2024', '2025', '2026']);
   const [activeForecast, toggleForecast] = useToggleState<ForecastType>(['probable']);
 
-  // Obtener datos intradía para el total actualizado
-  const intradayData = useMemo(() => getIntradayData(todayIntradayData), []);
-  const intradayTotal = intradayData?.statistics.currentTotal || 0;
+  // Convex queries
+  const totals = useQuery(api.queries.getTotals);
+  const dailyAverages = useQuery(api.queries.getDailyAverages);
+  const growthMetrics = useQuery(api.queries.getGrowthMetrics);
+  const historicalMax = useQuery(api.queries.getHistoricalMax);
+  const intradayData = useQuery(api.queries.getIntradayData);
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+
+  // Datos calculados
+  const intradayTotal = intradayData?.statistics?.currentTotal ?? 0;
 
   // Memoized KPI data
   const kpiData = useMemo(() => {
-    const historicalMax = getHistoricalMax();
+    if (!totals || !dailyAverages || !growthMetrics || !historicalMax) {
+      return null;
+    }
+
     // Total 2026 = días completos + intradía actual
     const totalWithIntraday = totals['2026'] + intradayTotal;
     // Calcular crecimiento actualizado vs 2025
-    const growthVs2025WithIntraday = (((totalWithIntraday / totals['2025']) - 1) * 100).toFixed(1);
+    const growthVs2025WithIntraday = totals['2025'] > 0
+      ? (((totalWithIntraday / totals['2025']) - 1) * 100).toFixed(1)
+      : '0.0';
+    
+    const currentDay = lastAvailableDay ?? 25;
     
     return {
       totalEvents: totalWithIntraday.toLocaleString(),
       totalEventsSubtitle: intradayTotal > 0 
-        ? `YTD al ${formatDayMonth(lastAvailableDay)} + intradía` 
-        : `YTD al ${formatDayMonth(lastAvailableDay)}`,
-      biannualGrowth: `+${growth24vs26}%`,
+        ? `YTD al ${formatDayMonth(currentDay)} + intradía` 
+        : `YTD al ${formatDayMonth(currentDay)}`,
+      biannualGrowth: `+${growthMetrics.growth24vs26}%`,
       dailyAverage: dailyAverages['2026'].toLocaleString(),
       prevDailyAverage: dailyAverages['2025'].toLocaleString(),
-      growthVs2025: intradayTotal > 0 ? `+${growthVs2025WithIntraday}%` : `+${growth25vs26}%`,
+      growthVs2025: intradayTotal > 0 ? `+${growthVs2025WithIntraday}%` : `+${growthMetrics.growth25vs26}%`,
       maxValue: historicalMax.value.toLocaleString(),
       maxDate: `${historicalMax.day} de Enero ${historicalMax.year}`,
     };
-  }, [intradayTotal]);
+  }, [totals, dailyAverages, growthMetrics, historicalMax, intradayTotal, lastAvailableDay]);
+
+  // Loading state
+  if (!kpiData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          <p className="text-slate-400">Cargando datos del dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -77,6 +97,11 @@ export const JanuaryDashboard = () => {
           <h2 className="text-lg font-bold text-white">Análisis Táctico: Enero 2026</h2>
           <p className="text-sm text-slate-400">
             Seguimiento diario del mes de mayor recaudación. Comparativa vs. Enero 2024 y 2025.
+            {intradayData?.lastExtraction && (
+              <span className="ml-2 text-emerald-400">
+                · Última actualización: {intradayData.lastExtraction}
+              </span>
+            )}
           </p>
         </div>
       </div>
