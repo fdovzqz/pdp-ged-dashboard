@@ -89,11 +89,49 @@ Si necesitas reiniciar los datos:
 ```bash
 npx convex run seedData:clearAllData
 npx convex run seedData:seedAllData
+node scripts/seedAnnualToConvex.js
+# Intradía (día 26 de prueba; o usa cloudwatch:manualFetch si tienes AWS):
+npx convex run seedData:seedIntradayData
 ```
+
+### Recuperar producción tras datos duplicados
+Si los números en prod aparecen duplicados (p. ej. por haber ejecutado `seedAllData` varias veces sin limpiar), haz un reset completo y re-seed. **Nota:** `clearAllData` también borra `intradayData` e `intradayMeta`; tras el seed hay que repoblar intradía (seed o CloudWatch).
+
+**Producción:**
+```bash
+# 1. Limpiar todas las tablas
+npx convex run seedData:clearAllData --prod
+
+# 2. Seed de datos base (diarios, distribución horaria, processingControl)
+npx convex run seedData:seedAllData --prod
+
+# 3. Histórico anual (monthlyData)
+node scripts/seedAnnualToConvex.js --prod
+
+# 4. Intradía: datos de prueba (día 26) O CloudWatch real si tienes AWS en prod:
+npx convex run seedData:seedIntradayData --prod
+# Alternativa con datos reales: npx convex run cloudwatch:manualFetch --prod
+```
+
+A partir de ahora `seedAllData` **borra antes de insertar** las tablas que escribe, así que volver a ejecutarlo no duplicará datos.
+
+### Alinear dev y prod
+Para que dev tenga los mismos datos que prod (dailyData, monthlyData, intradayData, etc.):
+
+**Dev (sin --prod):**
+```bash
+npx convex run seedData:clearAllData
+npx convex run seedData:seedAllData
+node scripts/seedAnnualToConvex.js
+npx convex run seedData:seedIntradayData
+```
+
+**Prod:** usa los mismos comandos con `--prod` en `convex run` y `node scripts/seedAnnualToConvex.js --prod`.
 
 ## Estructura de Tablas
 
 - `dailyData` - Datos diarios por año
+- `monthlyData` - Histórico anual (2024, 2025) por mes
 - `hourlyDistribution` - Distribución horaria (weekday/weekend)
 - `intradayData` - Datos del día actual en progreso
 - `intradayMeta` - Metadatos de última extracción

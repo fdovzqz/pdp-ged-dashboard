@@ -112,10 +112,25 @@ const hourlyDistributionWeekend = [
   { hour: 23, "2024": 49, "2025": 64, "2026": 98 },
 ];
 
-// Mutation para hacer seed de todos los datos
+// Mutation para hacer seed de todos los datos.
+// IDEMPOTENTE: borra dailyData, hourlyDistribution, processingControl y extractionLog
+// antes de insertar para evitar duplicados si se ejecuta más de una vez.
 export const seedAllData = mutation({
   handler: async (ctx) => {
     console.log("🌱 Iniciando seed de datos...");
+
+    // 0. Limpiar tablas que esta mutation escribe (evita duplicados al re-ejecutar)
+    const toClear = [
+      { name: "dailyData", q: () => ctx.db.query("dailyData").collect() },
+      { name: "hourlyDistribution", q: () => ctx.db.query("hourlyDistribution").collect() },
+      { name: "processingControl", q: () => ctx.db.query("processingControl").collect() },
+      { name: "extractionLog", q: () => ctx.db.query("extractionLog").collect() },
+    ];
+    for (const { name, q } of toClear) {
+      const rows = await q();
+      for (const doc of rows) await ctx.db.delete(doc._id);
+      if (rows.length > 0) console.log(`   🗑️ ${name}: ${rows.length} registros eliminados.`);
+    }
 
     // 1. Insertar datos diarios (días 1-25 para los 3 años)
     console.log("📊 Insertando datos diarios (días 1-25)...");
@@ -241,6 +256,12 @@ export const clearAllData = mutation({
     // Limpiar extractionLog
     const extractionLog = await ctx.db.query("extractionLog").collect();
     for (const item of extractionLog) {
+      await ctx.db.delete(item._id);
+    }
+
+    // Limpiar monthlyData (histórico anual)
+    const monthlyData = await ctx.db.query("monthlyData").collect();
+    for (const item of monthlyData) {
       await ctx.db.delete(item._id);
     }
 

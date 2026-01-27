@@ -271,136 +271,161 @@ export const getHourlyDistributionByType = query({
 
 // ============ DATOS INTRADÍA ============
 
+// Sanitizar número para evitar NaN/Infinity que rompen la serialización de Convex
+function sanitizeNum(x: number, fallback: number): number {
+  if (typeof x !== "number" || !Number.isFinite(x)) return fallback;
+  return x;
+}
+
 // Obtener datos intradía del día actual
 export const getIntradayData = query({
   handler: async (ctx) => {
-    // Obtener el último día completo para saber cuál es el día actual
-    const processingControl = await ctx.db
-      .query("processingControl")
-      .withIndex("by_key", (q) => q.eq("key", "lastProcessedDay"))
-      .unique();
+    try {
+      // Obtener el último día completo para saber cuál es el día actual
+      const processingControl = await ctx.db
+        .query("processingControl")
+        .withIndex("by_key", (q) => q.eq("key", "lastProcessedDay"))
+        .unique();
 
-    const lastCompleteDay = processingControl?.lastCompleteDay ?? 25;
-    const currentDay = lastCompleteDay + 1;
+      const lastCompleteDay = sanitizeNum(processingControl?.lastCompleteDay ?? 25, 25);
+      const currentDay = Math.min(31, Math.max(1, lastCompleteDay + 1));
 
-    // Obtener datos intradía
-    const intradayData = await ctx.db
-      .query("intradayData")
-      .withIndex("by_day_hour", (q) => q.eq("day", currentDay))
-      .collect();
+      // Obtener datos intradía
+      const intradayData = await ctx.db
+        .query("intradayData")
+        .withIndex("by_day_hour", (q) => q.eq("day", currentDay))
+        .collect();
 
-    if (intradayData.length === 0) {
+      if (intradayData.length === 0) {
+        return null;
+      }
+
+      // Obtener metadatos
+      const meta = await ctx.db
+        .query("intradayMeta")
+        .withIndex("by_day", (q) => q.eq("day", currentDay))
+        .unique();
+
+      // Obtener datos históricos del mismo día
+      const historical2024 = HISTORICAL_FULL_2024[currentDay] ?? 0;
+      const historical2025 = HISTORICAL_FULL_2025[currentDay] ?? 0;
+
+      // Si el día está en la BD (días 1-25 de años anteriores), obtenerlo
+      const dbHistorical = await ctx.db
+        .query("dailyData")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("day"), currentDay),
+            q.or(q.eq(q.field("year"), 2024), q.eq(q.field("year"), 2025))
+          )
+        )
+        .collect();
+
+      let hist2024 = historical2024;
+      let hist2025 = historical2025;
+
+      for (const item of dbHistorical) {
+        if (item.year === 2024) hist2024 = item.events;
+        if (item.year === 2025) hist2025 = item.events;
+      }
+
+      // Calcular totales y estadísticas (sanitizar hour para evitar NaN)
+      const currentTotal = intradayData.reduce((sum, h) => sum + (Number(h.events) || 0), 0);
+      const hours = intradayData.map((h) => (typeof h.hour === "number" && h.hour >= 0 && h.hour <= 23 ? h.hour : 0));
+      const lastHour = hours.length > 0 ? Math.min(23, Math.max(0, Math.max(...hours))) : 0;
+      const hoursRemaining = 24 - lastHour - 1;
+
+      // Calcular proyecciones
+      const forecast = calculateIntradayForecast(
+        currentTotal,
+        lastHour,
+        currentDay,
+        hist2024,
+        hist2025
+      );
+
+      const sortedData = intradayData
+        .map((h) => ({
+          hour: sanitizeNum(h.hour, 0),
+          events: sanitizeNum(h.events, 0),
+          cumulative: sanitizeNum(h.cumulative, 0),
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+      const vs2024 = hist2024 > 0 ? (currentTotal / hist2024 - 1) * 1000 / 10 : 0;
+      const vs2025 = hist2025 > 0 ? (currentTotal / hist2025 - 1) * 1000 / 10 : 0;
+      const averagePerHour = lastHour >= 0 ? currentTotal / (lastHour + 1) : 0;
+
+      return {
+        currentDay,
+        currentHour: lastHour,
+        hoursRemaining,
+        todayData: sortedData,
+        historicalComparison: {
+          "2024": sanitizeNum(hist2024, 0),
+          "2025": sanitizeNum(hist2025, 0),
+          "2026": sanitizeNum(currentTotal, 0),
+        },
+        forecast: {
+          conservador: sanitizeNum(forecast.conservador, 0),
+          probable: sanitizeNum(forecast.probable, 0),
+          optimista: sanitizeNum(forecast.optimista, 0),
+        },
+        statistics: {
+          currentTotal: sanitizeNum(currentTotal, 0),
+          projectedTotal: sanitizeNum(forecast.probable, 0),
+          vs2024: sanitizeNum(Math.round(vs2024 * 10) / 10, 0),
+          vs2025: sanitizeNum(Math.round(vs2025 * 10) / 10, 0),
+          averagePerHour: sanitizeNum(Math.round(averagePerHour * 10) / 10, 0),
+          projectedEndOfDay: sanitizeNum(forecast.probable, 0),
+        },
+        lastExtraction: meta?.lastExtraction ?? "",
+        lastExtractionIso: meta?.lastExtractionIso ?? "",
+      };
+    } catch (_e) {
       return null;
     }
-
-    // Obtener metadatos
-    const meta = await ctx.db
-      .query("intradayMeta")
-      .withIndex("by_day", (q) => q.eq("day", currentDay))
-      .unique();
-
-    // Obtener datos históricos del mismo día
-    const historical2024 = HISTORICAL_FULL_2024[currentDay] ?? 0;
-    const historical2025 = HISTORICAL_FULL_2025[currentDay] ?? 0;
-
-    // Si el día está en la BD (días 1-25 de años anteriores), obtenerlo
-    const dbHistorical = await ctx.db
-      .query("dailyData")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("day"), currentDay),
-          q.or(q.eq(q.field("year"), 2024), q.eq(q.field("year"), 2025))
-        )
-      )
-      .collect();
-
-    let hist2024 = historical2024;
-    let hist2025 = historical2025;
-
-    for (const item of dbHistorical) {
-      if (item.year === 2024) hist2024 = item.events;
-      if (item.year === 2025) hist2025 = item.events;
-    }
-
-    // Calcular totales y estadísticas
-    const currentTotal = intradayData.reduce((sum, h) => sum + h.events, 0);
-    const lastHour = Math.max(...intradayData.map((h) => h.hour));
-    const hoursRemaining = 24 - lastHour - 1;
-
-    // Calcular proyecciones basadas en distribución horaria histórica
-    const forecast = calculateIntradayForecast(
-      currentTotal,
-      lastHour,
-      currentDay,
-      hist2024,
-      hist2025
-    );
-
-    const sortedData = intradayData
-      .map((h) => ({
-        hour: h.hour,
-        events: h.events,
-        cumulative: h.cumulative,
-      }))
-      .sort((a, b) => a.hour - b.hour);
-
-    return {
-      currentDay,
-      currentHour: lastHour,
-      hoursRemaining,
-      todayData: sortedData,
-      historicalComparison: {
-        "2024": hist2024,
-        "2025": hist2025,
-        "2026": currentTotal,
-      },
-      forecast,
-      statistics: {
-        currentTotal,
-        projectedTotal: forecast.probable,
-        vs2024: hist2024 > 0 ? Math.round(((currentTotal / hist2024) - 1) * 1000) / 10 : 0,
-        vs2025: hist2025 > 0 ? Math.round(((currentTotal / hist2025) - 1) * 1000) / 10 : 0,
-        averagePerHour: lastHour > 0 ? Math.round((currentTotal / (lastHour + 1)) * 10) / 10 : 0,
-        projectedEndOfDay: forecast.probable,
-      },
-      lastExtraction: meta?.lastExtraction ?? "",
-      lastExtractionIso: meta?.lastExtractionIso ?? "",
-    };
   },
 });
 
-// Helper para calcular proyecciones intradía
+// Helper para calcular proyecciones intradía.
+// Sanitiza entradas y evita NaN/Infinity que rompen la serialización de Convex.
 function calculateIntradayForecast(
   currentTotal: number,
   currentHour: number,
-  _currentDay: number, // Prefijo _ para indicar que es intencional
+  _currentDay: number,
   historical2024: number,
   historical2025: number
 ): { conservador: number; probable: number; optimista: number } {
-  if (currentHour === 0) {
-    const avg = (historical2024 + historical2025) / 2;
-    return { conservador: Math.round(avg), probable: Math.round(avg), optimista: Math.round(avg) };
+  const total = sanitizeNum(currentTotal, 0);
+  const hour = Math.max(0, Math.min(23, Math.floor(Number(currentHour)) || 0));
+  const h24 = sanitizeNum(historical2024, 0);
+  const h25 = sanitizeNum(historical2025, 0);
+
+  if (hour === 0) {
+    const avg = (h24 + h25) / 2;
+    return {
+      conservador: sanitizeNum(Math.round(avg), 0),
+      probable: sanitizeNum(Math.round(avg), 0),
+      optimista: sanitizeNum(Math.round(avg), 0),
+    };
   }
 
-  // Factor de rendimiento basado en progreso vs histórico
-  const avgHistorical = (historical2024 + historical2025) / 2;
-  
-  // Asumimos una distribución aproximada (pico en horas de oficina)
-  // Porcentaje acumulado aproximado hasta cada hora
+  const avgHistorical = (h24 + h25) / 2;
   const hourlyProgress = [
     0.01, 0.02, 0.02, 0.02, 0.02, 0.03, 0.04, 0.06, 0.10, 0.16,
     0.24, 0.34, 0.45, 0.55, 0.64, 0.72, 0.79, 0.85, 0.89, 0.93,
     0.96, 0.98, 0.99, 1.0,
   ];
+  const rawProgress = hourlyProgress[hour];
+  const expectedProgress = typeof rawProgress === "number" && rawProgress > 0 ? rawProgress : 0.5;
+  const expectedTotal = expectedProgress > 0 ? total / expectedProgress : total * 2;
 
-  const expectedProgress = hourlyProgress[Math.min(currentHour, 23)];
-  const expectedTotal = avgHistorical > 0 ? currentTotal / expectedProgress : currentTotal * 2;
-
-  const conservador = Math.round(expectedTotal * 0.9);
-  const probable = Math.round(expectedTotal);
-  const optimista = Math.round(expectedTotal * 1.1);
-
-  return { conservador, probable, optimista };
+  return {
+    conservador: sanitizeNum(Math.round(sanitizeNum(expectedTotal, 0) * 0.9), 0),
+    probable: sanitizeNum(Math.round(sanitizeNum(expectedTotal, 0)), 0),
+    optimista: sanitizeNum(Math.round(sanitizeNum(expectedTotal, 0) * 1.1), 0),
+  };
 }
 
 // ============ FORECAST / PROYECCIONES ============
