@@ -599,26 +599,32 @@ export const getForecastTotals = query({
 
 // ============ ESTADÍSTICAS ADICIONALES ============
 
-// Obtener estadísticas weekday vs weekend
+// Obtener estadísticas L-V vs S-D (solo hasta lastAvailableDay de 2026 para comparación equivalente)
+// Devuelve { sum, days } por tipo para promedios correctos (suma / días efectivos)
 export const getWeekdayWeekendStats = query({
   handler: async (ctx) => {
     const allData = await ctx.db.query("dailyData").collect();
 
+    const data2026 = allData.filter((d) => d.year === 2026 && d.isComplete);
+    const lastAvailableDay = data2026.length > 0 ? Math.max(...data2026.map((d) => d.day)) : 0;
+
     const stats = {
-      "2024": { weekday: 0, weekend: 0 },
-      "2025": { weekday: 0, weekend: 0 },
-      "2026": { weekday: 0, weekend: 0 },
+      "2024": { weekday: { sum: 0, days: 0 }, weekend: { sum: 0, days: 0 } },
+      "2025": { weekday: { sum: 0, days: 0 }, weekend: { sum: 0, days: 0 } },
+      "2026": { weekday: { sum: 0, days: 0 }, weekend: { sum: 0, days: 0 } },
     };
 
     for (const item of allData) {
-      if (!item.isComplete) continue;
+      if (!item.isComplete || item.day > lastAvailableDay) continue;
       const yearKey = item.year.toString() as YearType;
       const isWeekend = WEEKEND_DAYS[item.year]?.includes(item.day) ?? false;
 
       if (isWeekend) {
-        stats[yearKey].weekend += item.events;
+        stats[yearKey].weekend.sum += item.events;
+        stats[yearKey].weekend.days += 1;
       } else {
-        stats[yearKey].weekday += item.events;
+        stats[yearKey].weekday.sum += item.events;
+        stats[yearKey].weekday.days += 1;
       }
     }
 
@@ -627,10 +633,14 @@ export const getWeekdayWeekendStats = query({
 });
 
 // Obtener estadísticas por período del mes (Arranque 1-7, Medio 8-24, Cierre 25-31)
-// Devuelve suma y días efectivos por período para promedios correctos (suma / días con datos)
+// Solo incluye días hasta lastAvailableDay (de 2026) para comparación equivalente entre años
 export const getPeriodStats = query({
   handler: async (ctx) => {
     const allData = await ctx.db.query("dailyData").collect();
+
+    // Último día con datos completos en 2026 → usamos ese tope para 2024, 2025 y 2026
+    const data2026 = allData.filter((d) => d.year === 2026 && d.isComplete);
+    const lastAvailableDay = data2026.length > 0 ? Math.max(...data2026.map((d) => d.day)) : 0;
 
     const stats = {
       "2024": {
@@ -651,10 +661,10 @@ export const getPeriodStats = query({
     };
 
     for (const item of allData) {
-      if (!item.isComplete) continue;
+      if (!item.isComplete || item.day > lastAvailableDay) continue;
       const yearKey = item.year.toString() as YearType;
 
-      // Arranque: 1-7 | Medio: 8-24 | Cierre: 25-31
+      // Arranque: 1-7 | Medio: 8-24 | Cierre: 25-31 (solo días ≤ lastAvailableDay)
       if (item.day <= 7) {
         stats[yearKey].arranque.sum += item.events;
         stats[yearKey].arranque.days += 1;

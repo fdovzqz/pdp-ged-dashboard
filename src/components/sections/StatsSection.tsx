@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Activity, Loader2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
@@ -18,26 +17,44 @@ type PeriodValue = { sum: number; days: number } | number;
 const isNewPeriodShape = (v: PeriodValue): v is { sum: number; days: number } =>
   typeof v === 'object' && v !== null && 'sum' in v && 'days' in v;
 
-/** Normaliza arranque/medio/cierre a { sum, days } para compatibilidad con backend legado. */
+type WeekdayWeekendValue = { sum: number; days: number } | number;
+const isNewWeekdayShape = (v: WeekdayWeekendValue): v is { sum: number; days: number } =>
+  typeof v === 'object' && v !== null && 'sum' in v && 'days' in v;
+
+/** Normaliza { weekday, weekend } a { sum, days } para compatibilidad con backend legado. */
+function normalizeWeekdayWeekend(
+  raw: { weekday: WeekdayWeekendValue; weekend: WeekdayWeekendValue },
+  year: YearType,
+  lastAvailableDay: number
+): { weekday: { sum: number; days: number }; weekend: { sum: number; days: number } } {
+  if (isNewWeekdayShape(raw.weekday) && isNewWeekdayShape(raw.weekend)) {
+    return { weekday: raw.weekday, weekend: raw.weekend };
+  }
+  const weekendDaysInRange = WEEKEND_DAYS[parseInt(year, 10)].filter((d) => d <= lastAvailableDay).length;
+  const weekdayDaysInRange = Math.max(0, lastAvailableDay - weekendDaysInRange);
+  return {
+    weekday: { sum: typeof raw.weekday === 'number' ? raw.weekday : 0, days: weekdayDaysInRange },
+    weekend: { sum: typeof raw.weekend === 'number' ? raw.weekend : 0, days: weekendDaysInRange },
+  };
+}
+
+/** Normaliza arranque/medio/cierre a { sum, days } para compatibilidad con backend legado.
+ *  Para comparación equivalente, 2024 y 2025 usan el mismo tope (lastAvailableDay) que 2026. */
 function normalizePeriod(
   raw: PeriodValue,
   kind: 'arranque' | 'medio' | 'cierre',
-  year: YearType,
+  _year: YearType,
   lastAvailableDay: number
 ): { sum: number; days: number } {
   if (isNewPeriodShape(raw)) return raw;
   const sum = typeof raw === 'number' ? raw : 0;
-  // Heurística de días efectivos cuando el backend no envía { sum, days }
-  // Arranque 1-7 | Medio 8-24 | Cierre 25-31
-  const is2026 = year === '2026';
+  // Heurística: todos los años cap por lastAvailableDay (Arranque 1-7, Medio 8-24, Cierre 25-31)
   const days =
     kind === 'arranque'
-      ? is2026 ? Math.min(7, lastAvailableDay) : 7
+      ? Math.min(7, lastAvailableDay)
       : kind === 'medio'
-        ? is2026 ? Math.min(17, Math.max(0, lastAvailableDay - 7)) : 17
-        : is2026
-          ? Math.max(0, lastAvailableDay - 24)
-          : 7;
+        ? Math.min(17, Math.max(0, lastAvailableDay - 7))
+        : Math.max(0, lastAvailableDay - 24);
   return { sum, days };
 }
 
@@ -47,28 +64,10 @@ export const StatsSection = () => {
   const periodStats = useQuery(api.queries.getPeriodStats);
   const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
 
-  // Calcular dinámicamente los conteos de días
-  const weekdayCounts = useMemo(() => {
-    if (lastAvailableDay === undefined) return null;
-    
-    const counts: Record<string, { weekdays: number; weekends: number }> = {};
-    
-    for (const year of [2024, 2025, 2026]) {
-      const weekendDaysForYear = WEEKEND_DAYS[year].filter(d => d <= lastAvailableDay);
-      counts[year.toString()] = {
-        weekends: weekendDaysForYear.length,
-        weekdays: lastAvailableDay - weekendDaysForYear.length,
-      };
-    }
-    
-    return counts;
-  }, [lastAvailableDay]);
-
-
   const years: YearType[] = ['2024', '2025', '2026'];
 
   // Loading state
-  if (weekdayWeekendStats === undefined || periodStats === undefined || lastAvailableDay === undefined || !weekdayCounts) {
+  if (weekdayWeekendStats === undefined || periodStats === undefined || lastAvailableDay === undefined) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
@@ -117,9 +116,11 @@ export const StatsSection = () => {
         
         <div className="flex flex-col gap-3">
           {years.map((year) => {
-            const counts = weekdayCounts[year];
-            const stats = weekdayWeekendStats[year];
-            
+            const { weekday: w, weekend: s } = normalizeWeekdayWeekend(
+              weekdayWeekendStats[year],
+              year,
+              lastAvailableDay
+            );
             return (
               <div
                 key={year}
@@ -131,24 +132,24 @@ export const StatsSection = () => {
                 >
                   {year}
                 </span>
-                
+
                 <div className="bg-slate-700/40 rounded-lg p-4">
-                  <div className="text-xs text-slate-400 mb-1">L-V ({counts.weekdays} días)</div>
-                  <div className="font-bold text-white text-lg">
-                    {stats.weekday.toLocaleString()}
+                  <div className="text-[11px] text-slate-400 mb-1">L-V ({w.days} días)</div>
+                  <div className="font-bold text-white">
+                    Ø {w.days > 0 ? Math.round(w.sum / w.days).toLocaleString() : 0}/día
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                    Ø {counts.weekdays > 0 ? Math.round(stats.weekday / counts.weekdays).toLocaleString() : 0}/día
+                    Σ {w.sum.toLocaleString()}
                   </div>
                 </div>
-                
+
                 <div className="bg-slate-700/40 rounded-lg p-4">
-                  <div className="text-xs text-slate-400 mb-1">S-D ({counts.weekends} días)</div>
-                  <div className="font-bold text-white text-lg">
-                    {stats.weekend.toLocaleString()}
+                  <div className="text-[11px] text-slate-400 mb-1">S-D ({s.days} días)</div>
+                  <div className="font-bold text-white">
+                    Ø {s.days > 0 ? Math.round(s.sum / s.days).toLocaleString() : 0}/día
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                    Ø {counts.weekends > 0 ? Math.round(stats.weekend / counts.weekends).toLocaleString() : 0}/día
+                    Σ {s.sum.toLocaleString()}
                   </div>
                 </div>
               </div>
