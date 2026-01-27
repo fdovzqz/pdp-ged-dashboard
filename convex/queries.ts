@@ -197,6 +197,20 @@ export const getHourlyDistribution = query({
       data = await ctx.db.query("hourlyDistribution").collect();
     }
 
+    // Calcular número de días completos por año para obtener promedios
+    const dailyData = await ctx.db.query("dailyData").collect();
+    const dayCounts: Record<YearType, number> = {
+      "2024": 0,
+      "2025": 0,
+      "2026": 0,
+    };
+
+    for (const item of dailyData) {
+      if (!item.isComplete) continue;
+      const yearKey = item.year.toString() as YearType;
+      dayCounts[yearKey] += 1;
+    }
+
     // Si no se especifica dayType, sumar weekday + weekend para cada hora/año
     const hourMap = new Map<
       number,
@@ -219,11 +233,22 @@ export const getHourlyDistribution = query({
     ];
 
     return Array.from(hourMap.entries())
-      .map(([hour, data]) => ({
-        hour,
-        label: hourLabels[hour],
-        ...data,
-      }))
+      .map(([hour, totals]) => {
+        const avg2024 =
+          dayCounts["2024"] > 0 ? Math.round(totals["2024"] / dayCounts["2024"]) : 0;
+        const avg2025 =
+          dayCounts["2025"] > 0 ? Math.round(totals["2025"] / dayCounts["2025"]) : 0;
+        const avg2026 =
+          dayCounts["2026"] > 0 ? Math.round(totals["2026"] / dayCounts["2026"]) : 0;
+
+        return {
+          hour,
+          label: hourLabels[hour],
+          "2024": avg2024,
+          "2025": avg2025,
+          "2026": avg2026,
+        };
+      })
       .sort((a, b) => a.hour - b.hour);
   },
 });

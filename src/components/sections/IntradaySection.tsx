@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart,
@@ -35,6 +35,10 @@ export const IntradaySection = () => {
   const currentHour = intradayData?.currentHour ?? 0;
   const historicalComparison = intradayData?.historicalComparison ?? { '2024': 0, '2025': 0, '2026': 0 };
   const forecast = intradayData?.forecast ?? { conservador: 0, probable: 0, optimista: 0 };
+
+  // Estado para resaltar suavemente cuando hay una actualización nueva
+  const [justUpdated, setJustUpdated] = useState(false);
+  const lastExtractionIsoRef = useRef<string | null>(null);
 
   // Encontrar la última hora con datos reales
   const lastHourWithData = todayData.length > 0 ? Math.max(...todayData.map(h => h.hour)) : 0;
@@ -82,6 +86,29 @@ export const IntradaySection = () => {
     });
   }, [currentHour, todayData, historicalComparison, forecast]);
 
+  // Detectar cambios en lastExtractionIso para disparar un efecto visual sutil
+  useEffect(() => {
+    if (!intradayData?.lastExtractionIso) {
+      return;
+    }
+
+    if (lastExtractionIsoRef.current === intradayData.lastExtractionIso) {
+      return;
+    }
+
+    // Actualizar referencia y disparar highlight temporal
+    lastExtractionIsoRef.current = intradayData.lastExtractionIso;
+    setJustUpdated(true);
+
+    const timeoutId = window.setTimeout(() => {
+      setJustUpdated(false);
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [intradayData?.lastExtractionIso]);
+
   // Si los datos aún están cargando
   if (intradayData === undefined) {
     return (
@@ -113,7 +140,11 @@ export const IntradaySection = () => {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className={`bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border p-6 transition-all duration-500 ${
+        justUpdated
+          ? 'border-emerald-400/70 shadow-[0_0_30px_rgba(16,185,129,0.45)]'
+          : 'border-slate-700/50'
+      }`}
     >
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 rounded-lg bg-amber-500/20">
@@ -305,7 +336,9 @@ export const IntradaySection = () => {
       <div className="mt-4 flex items-start gap-2 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
         <AlertCircle size={16} className="text-blue-400 mt-0.5 shrink-0" />
         <p className="text-xs text-blue-300">
-          Los datos se actualizan automáticamente cada 5 minutos desde CloudWatch. El día actual se excluye de los datos históricos hasta que esté completo (23:59 hora de México).
+          Los datos se actualizan automáticamente desde CloudWatch cada minuto de 9:00 a 21:00 y cada 5 minutos
+          fuera de ese horario. El día actual se excluye de los datos históricos hasta que esté completo
+          (23:59 hora de México).
         </p>
       </div>
     </motion.div>

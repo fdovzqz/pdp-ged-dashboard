@@ -195,12 +195,29 @@ export const fetchAndUpdateData = internalAction({
       const mexicoNow = new Date(now.getTime() - 6 * 60 * 60 * 1000);
       const todayDay = mexicoNow.getUTCDate();
       const todayHour = mexicoNow.getUTCHours();
+      const currentMinute = mexicoNow.getUTCMinutes();
       const todayMonth = mexicoNow.getUTCMonth();
       const todayYear = mexicoNow.getUTCFullYear();
 
       console.log(
         `Fecha actual (México): ${todayYear}-${String(todayMonth + 1).padStart(2, "0")}-${String(todayDay).padStart(2, "0")} ${String(todayHour).padStart(2, "0")}:00`
       );
+
+      // Throttling por horario:
+      // - De 09:00 a 21:00 (hora México) se ejecuta cada minuto.
+      // - Fuera de ese rango solo se ejecuta cuando el minuto es múltiplo de 5.
+      const isBusinessHour = todayHour >= 9 && todayHour < 21;
+      if (!isBusinessHour && currentMinute % 5 !== 0) {
+        console.log(
+          `⏭️  Ejecución omitida por ventana horaria. Hora local: ${todayHour}:${String(currentMinute).padStart(2, "0")}`
+        );
+        return {
+          success: true,
+          message: "Skipped by schedule (off-hours throttling)",
+          daysProcessed: 0,
+          totalRecords: 0,
+        };
+      }
 
       const nextDayToProcess = lastCompleteDay + 1;
 

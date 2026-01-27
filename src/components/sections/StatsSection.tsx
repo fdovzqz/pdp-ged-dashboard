@@ -127,7 +127,7 @@ export const StatsSection = () => {
                 className="grid grid-cols-[50px_1fr_1fr] sm:grid-cols-[60px_1fr_1fr] gap-2 sm:gap-3 items-center"
               >
                 <span
-                  className="font-semibold"
+                  className="font-semibold inline-flex items-center justify-center -rotate-90 text-xs sm:text-sm"
                   style={{ color: YEAR_COLORS[year] }}
                 >
                   {year}
@@ -136,7 +136,7 @@ export const StatsSection = () => {
                 <div className="bg-slate-700/40 rounded-lg p-4">
                   <div className="text-[11px] text-slate-400 mb-1">L-V ({w.days} días)</div>
                   <div className="font-bold text-white">
-                    Ø {w.days > 0 ? Math.round(w.sum / w.days).toLocaleString() : 0}/día
+                    Ø {w.days > 0 ? Math.round(w.sum / w.days).toLocaleString() : 0}
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
                     Σ {w.sum.toLocaleString()}
@@ -146,7 +146,7 @@ export const StatsSection = () => {
                 <div className="bg-slate-700/40 rounded-lg p-4">
                   <div className="text-[11px] text-slate-400 mb-1">S-D ({s.days} días)</div>
                   <div className="font-bold text-white">
-                    Ø {s.days > 0 ? Math.round(s.sum / s.days).toLocaleString() : 0}/día
+                    Ø {s.days > 0 ? Math.round(s.sum / s.days).toLocaleString() : 0}
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
                     Σ {s.sum.toLocaleString()}
@@ -185,7 +185,7 @@ export const StatsSection = () => {
                 className="grid grid-cols-[50px_1fr_1fr_1fr] sm:grid-cols-[60px_1fr_1fr_1fr] gap-1.5 sm:gap-3 items-center"
               >
                 <span
-                  className="font-semibold"
+                  className="font-semibold inline-flex items-center justify-center -rotate-90 text-xs sm:text-sm"
                   style={{ color: YEAR_COLORS[year] }}
                 >
                   {year}
@@ -196,7 +196,7 @@ export const StatsSection = () => {
                     Arranque ({labelArranque})
                   </div>
                   <div className="font-bold text-white">
-                    Ø {a.days > 0 ? Math.round(a.sum / a.days).toLocaleString() : 0}/día
+                    Ø {a.days > 0 ? Math.round(a.sum / a.days).toLocaleString() : 0}
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
                     Σ {a.sum.toLocaleString()}
@@ -208,7 +208,7 @@ export const StatsSection = () => {
                     Medio ({labelMedio})
                   </div>
                   <div className="font-bold text-white">
-                    Ø {m.days > 0 ? Math.round(m.sum / m.days).toLocaleString() : 0}/día
+                    Ø {m.days > 0 ? Math.round(m.sum / m.days).toLocaleString() : 0}
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
                     Σ {m.sum.toLocaleString()}
@@ -220,7 +220,7 @@ export const StatsSection = () => {
                     Cierre ({labelCierre})
                   </div>
                   <div className="font-bold text-white">
-                    Ø {c.days > 0 ? Math.round(c.sum / c.days).toLocaleString() : 0}/día
+                    Ø {c.days > 0 ? Math.round(c.sum / c.days).toLocaleString() : 0}
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
                     Σ {c.sum.toLocaleString()}

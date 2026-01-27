@@ -20,6 +20,10 @@ export const Footer = () => {
       <p className="text-slate-600 text-xs">
         © 2026 PaGob · Dashboard Ejecutivo de Análisis de Crecimiento
       </p>
+      <p className="text-slate-600 text-[11px] mt-2 max-w-3xl mx-auto">
+        La información presentada en este dashboard es exclusivamente para fines demostrativos y
+        no constituye información oficial ni de registro.
+      </p>
     </motion.footer>
   );
 };

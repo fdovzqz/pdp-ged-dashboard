@@ -58,7 +58,7 @@ export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear
             Distribución por Hora del Día
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Total de pagos por hora · Días 1-{lastAvailableDay} de Enero
+            Promedio diario de pagos por hora · Días 1-{lastAvailableDay} de Enero
           </p>
         </div>
         <div className="flex flex-wrap gap-1 sm:gap-2">
