@@ -12,6 +12,35 @@ const WEEKEND_DAYS: Record<number, number[]> = {
   2026: [3, 4, 10, 11, 17, 18, 24, 25, 31],
 };
 
+// Tipo devuelto por getPeriodStats (nuevo: { sum, days }; legado: number)
+type PeriodValue = { sum: number; days: number } | number;
+
+const isNewPeriodShape = (v: PeriodValue): v is { sum: number; days: number } =>
+  typeof v === 'object' && v !== null && 'sum' in v && 'days' in v;
+
+/** Normaliza arranque/medio/cierre a { sum, days } para compatibilidad con backend legado. */
+function normalizePeriod(
+  raw: PeriodValue,
+  kind: 'arranque' | 'medio' | 'cierre',
+  year: YearType,
+  lastAvailableDay: number
+): { sum: number; days: number } {
+  if (isNewPeriodShape(raw)) return raw;
+  const sum = typeof raw === 'number' ? raw : 0;
+  // Heurística de días efectivos cuando el backend no envía { sum, days }
+  // Arranque 1-7 | Medio 8-24 | Cierre 25-31
+  const is2026 = year === '2026';
+  const days =
+    kind === 'arranque'
+      ? is2026 ? Math.min(7, lastAvailableDay) : 7
+      : kind === 'medio'
+        ? is2026 ? Math.min(17, Math.max(0, lastAvailableDay - 7)) : 17
+        : is2026
+          ? Math.max(0, lastAvailableDay - 24)
+          : 7;
+  return { sum, days };
+}
+
 export const StatsSection = () => {
   // Obtener datos desde Convex
   const weekdayWeekendStats = useQuery(api.queries.getWeekdayWeekendStats);
@@ -35,31 +64,11 @@ export const StatsSection = () => {
     return counts;
   }, [lastAvailableDay]);
 
-  // Calcular rangos de períodos
-  const periodRanges = useMemo(() => {
-    if (lastAvailableDay === undefined) return null;
-    
-    const arranqueEnd = Math.min(7, lastAvailableDay);
-    const arranque = Array.from({ length: arranqueEnd }, (_, i) => i + 1);
-    
-    const medioStart = 8;
-    const medioEnd = Math.min(14, lastAvailableDay);
-    const medio = medioStart <= lastAvailableDay 
-      ? Array.from({ length: Math.max(0, medioEnd - medioStart + 1) }, (_, i) => i + medioStart)
-      : [];
-    
-    const cierreStart = 15;
-    const cierre = cierreStart <= lastAvailableDay
-      ? Array.from({ length: lastAvailableDay - cierreStart + 1 }, (_, i) => i + cierreStart)
-      : [];
-    
-    return { arranque, medio, cierre };
-  }, [lastAvailableDay]);
 
   const years: YearType[] = ['2024', '2025', '2026'];
 
   // Loading state
-  if (weekdayWeekendStats === undefined || periodStats === undefined || lastAvailableDay === undefined || !weekdayCounts || !periodRanges) {
+  if (weekdayWeekendStats === undefined || periodStats === undefined || lastAvailableDay === undefined || !weekdayCounts) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
@@ -162,8 +171,13 @@ export const StatsSection = () => {
         
         <div className="flex flex-col gap-3">
           {years.map((year) => {
-            const stats = periodStats[year];
-            
+            const a = normalizePeriod(periodStats[year].arranque, 'arranque', year, lastAvailableDay);
+            const m = normalizePeriod(periodStats[year].medio, 'medio', year, lastAvailableDay);
+            const c = normalizePeriod(periodStats[year].cierre, 'cierre', year, lastAvailableDay);
+            // Rangos efectivos según días con datos: Arranque 1-7, Medio 8-24, Cierre 25-31
+            const labelArranque = a.days > 0 ? `1-${Math.min(7, a.days)}` : '1-7';
+            const labelMedio = m.days > 0 ? `8-${Math.min(24, 7 + m.days)}` : '8-24';
+            const labelCierre = c.days > 0 ? `25-${Math.min(31, 24 + c.days)}` : '25-31';
             return (
               <div
                 key={year}
@@ -175,40 +189,40 @@ export const StatsSection = () => {
                 >
                   {year}
                 </span>
-                
+
                 <div className="bg-slate-700/40 rounded-lg p-4">
                   <div className="text-[11px] text-slate-400 mb-1">
-                    Sem 1 ({periodRanges.arranque[0]}-{periodRanges.arranque[periodRanges.arranque.length - 1]})
+                    Arranque ({labelArranque})
                   </div>
                   <div className="font-bold text-white">
-                    {stats.arranque.toLocaleString()}
+                    Ø {a.days > 0 ? Math.round(a.sum / a.days).toLocaleString() : 0}/día
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                    Ø {Math.round(stats.arranque / periodRanges.arranque.length).toLocaleString()}/día
+                    Σ {a.sum.toLocaleString()}
                   </div>
                 </div>
-                
+
                 <div className="bg-slate-700/40 rounded-lg p-4">
                   <div className="text-[11px] text-slate-400 mb-1">
-                    Sem 2 ({periodRanges.medio.length > 0 ? `${periodRanges.medio[0]}-${periodRanges.medio[periodRanges.medio.length - 1]}` : 'N/A'})
+                    Medio ({labelMedio})
                   </div>
                   <div className="font-bold text-white">
-                    {stats.medio.toLocaleString()}
+                    Ø {m.days > 0 ? Math.round(m.sum / m.days).toLocaleString() : 0}/día
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                    Ø {periodRanges.medio.length > 0 ? Math.round(stats.medio / periodRanges.medio.length).toLocaleString() : '0'}/día
+                    Σ {m.sum.toLocaleString()}
                   </div>
                 </div>
-                
+
                 <div className="bg-slate-700/40 rounded-lg p-4">
                   <div className="text-[11px] text-slate-400 mb-1">
-                    Sem 3+ ({periodRanges.cierre.length > 0 ? `${periodRanges.cierre[0]}-${periodRanges.cierre[periodRanges.cierre.length - 1]}` : 'N/A'})
+                    Cierre ({labelCierre})
                   </div>
                   <div className="font-bold text-white">
-                    {stats.cierre.toLocaleString()}
+                    Ø {c.days > 0 ? Math.round(c.sum / c.days).toLocaleString() : 0}/día
                   </div>
                   <div className="text-sm font-medium mt-1" style={{ color: YEAR_COLORS[year] }}>
-                    Ø {periodRanges.cierre.length > 0 ? Math.round(stats.cierre / periodRanges.cierre.length).toLocaleString() : '0'}/día
+                    Σ {c.sum.toLocaleString()}
                   </div>
                 </div>
               </div>

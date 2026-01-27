@@ -626,27 +626,44 @@ export const getWeekdayWeekendStats = query({
   },
 });
 
-// Obtener estadísticas por período del mes
+// Obtener estadísticas por período del mes (Arranque 1-7, Medio 8-24, Cierre 25-31)
+// Devuelve suma y días efectivos por período para promedios correctos (suma / días con datos)
 export const getPeriodStats = query({
   handler: async (ctx) => {
     const allData = await ctx.db.query("dailyData").collect();
 
     const stats = {
-      "2024": { arranque: 0, medio: 0, cierre: 0 },
-      "2025": { arranque: 0, medio: 0, cierre: 0 },
-      "2026": { arranque: 0, medio: 0, cierre: 0 },
+      "2024": {
+        arranque: { sum: 0, days: 0 },
+        medio: { sum: 0, days: 0 },
+        cierre: { sum: 0, days: 0 },
+      },
+      "2025": {
+        arranque: { sum: 0, days: 0 },
+        medio: { sum: 0, days: 0 },
+        cierre: { sum: 0, days: 0 },
+      },
+      "2026": {
+        arranque: { sum: 0, days: 0 },
+        medio: { sum: 0, days: 0 },
+        cierre: { sum: 0, days: 0 },
+      },
     };
 
     for (const item of allData) {
       if (!item.isComplete) continue;
       const yearKey = item.year.toString() as YearType;
 
+      // Arranque: 1-7 | Medio: 8-24 | Cierre: 25-31
       if (item.day <= 7) {
-        stats[yearKey].arranque += item.events;
-      } else if (item.day <= 14) {
-        stats[yearKey].medio += item.events;
+        stats[yearKey].arranque.sum += item.events;
+        stats[yearKey].arranque.days += 1;
+      } else if (item.day <= 24) {
+        stats[yearKey].medio.sum += item.events;
+        stats[yearKey].medio.days += 1;
       } else {
-        stats[yearKey].cierre += item.events;
+        stats[yearKey].cierre.sum += item.events;
+        stats[yearKey].cierre.days += 1;
       }
     }
 
