@@ -411,7 +411,6 @@ function calculateIntradayForecast(
     };
   }
 
-  const avgHistorical = (h24 + h25) / 2;
   const hourlyProgress = [
     0.01, 0.02, 0.02, 0.02, 0.02, 0.03, 0.04, 0.06, 0.10, 0.16,
     0.24, 0.34, 0.45, 0.55, 0.64, 0.72, 0.79, 0.85, 0.89, 0.93,
