@@ -792,6 +792,164 @@ export const getHeatmapData = query({
   },
 });
 
+// ============ HISTÓRICO ANUAL (monthlyData) ============
+
+const MONTH_NAMES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+type MonthlyRow = { year: number; month: number; events: number };
+
+function aggregateMonthlyData(rows: MonthlyRow[]) {
+  const monthly2024 = Array(12).fill(0) as number[];
+  const monthly2025 = Array(12).fill(0) as number[];
+  for (const r of rows) {
+    if (r.year === 2024) monthly2024[r.month - 1] += r.events;
+    if (r.year === 2025) monthly2025[r.month - 1] += r.events;
+  }
+  const total2024 = monthly2024.reduce((a, b) => a + b, 0);
+  const total2025 = monthly2025.reduce((a, b) => a + b, 0);
+  return { monthly2024, monthly2025, total2024, total2025 };
+}
+
+// Equivalente a monthlyComparisonData
+export const getAnnualMonthlyData = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { monthly2024, monthly2025 } = aggregateMonthlyData(rows);
+    return MONTH_NAMES.map((name, i) => {
+      const v4 = monthly2024[i];
+      const v5 = monthly2025[i];
+      const difference = v5 - v4;
+      const growthRate = v4 > 0 ? (difference / v4) * 100 : 0;
+      return {
+        month: i + 1,
+        monthName: name,
+        "2024": v4,
+        "2025": v5,
+        difference,
+        growthRate,
+      };
+    });
+  },
+});
+
+// Equivalente a monthlyAccumulatedData
+export const getAnnualMonthlyAccumulated = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { monthly2024, monthly2025 } = aggregateMonthlyData(rows);
+    let acc2024 = 0;
+    let acc2025 = 0;
+    return MONTH_NAMES.map((name, i) => {
+      acc2024 += monthly2024[i];
+      acc2025 += monthly2025[i];
+      return {
+        month: i + 1,
+        monthName: name,
+        "2024": monthly2024[i],
+        "2025": monthly2025[i],
+        accumulated2024: acc2024,
+        accumulated2025: acc2025,
+      };
+    });
+  },
+});
+
+// Totales anuales 2024 y 2025
+export const getAnnualTotals = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { total2024, total2025 } = aggregateMonthlyData(rows);
+    return { "2024": total2024, "2025": total2025 };
+  },
+});
+
+// Crecimiento año vs año
+export const getAnnualGrowth = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { total2024, total2025 } = aggregateMonthlyData(rows);
+    const absolute = total2025 - total2024;
+    const percentage =
+      total2024 > 0 ? ((absolute / total2024) * 100).toFixed(1) : "0";
+    return { absolute, percentage };
+  },
+});
+
+// Promedios diarios por año: { sum, days } para que el cliente calcule sum/days
+// 2024 bisiesto (366), 2025 no (365)
+export const getAnnualDailyAverages = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { total2024, total2025 } = aggregateMonthlyData(rows);
+    return {
+      "2024": { sum: total2024, days: 366 },
+      "2025": { sum: total2025, days: 365 },
+    };
+  },
+});
+
+// Trimestres: Q1=1-3, Q2=4-6, Q3=7-9, Q4=10-12
+export const getAnnualQuarterlyData = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { monthly2024, monthly2025 } = aggregateMonthlyData(rows);
+    const sum = (arr: number[], a: number, b: number) =>
+      arr.slice(a, b).reduce((x, y) => x + y, 0);
+    return {
+      "2024": {
+        Q1: sum(monthly2024, 0, 3),
+        Q2: sum(monthly2024, 3, 6),
+        Q3: sum(monthly2024, 6, 9),
+        Q4: sum(monthly2024, 9, 12),
+      },
+      "2025": {
+        Q1: sum(monthly2025, 0, 3),
+        Q2: sum(monthly2025, 3, 6),
+        Q3: sum(monthly2025, 6, 9),
+        Q4: sum(monthly2025, 9, 12),
+      },
+    };
+  },
+});
+
+// Estadísticas: max/min por año, meses con crecimiento/descenso, mejor/peor mes
+export const getAnnualStats = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("monthlyData").collect();
+    const { monthly2024, monthly2025 } = aggregateMonthlyData(rows);
+    const monthly = MONTH_NAMES.map((name, i) => {
+      const v4 = monthly2024[i];
+      const v5 = monthly2025[i];
+      const difference = v5 - v4;
+      const growthRate = v4 > 0 ? (difference / v4) * 100 : 0;
+      return {
+        month: i + 1,
+        monthName: name,
+        "2024": v4,
+        "2025": v5,
+        difference,
+        growthRate,
+      };
+    });
+    type M = (typeof monthly)[number];
+    const by = (f: (a: M, b: M) => boolean) => (arr: M[]) =>
+      arr.reduce((acc, curr) => (f(acc, curr) ? acc : curr));
+    return {
+      maxMonth2024: by((a, b) => a["2024"] >= b["2024"])(monthly),
+      minMonth2024: by((a, b) => a["2024"] <= b["2024"])(monthly),
+      maxMonth2025: by((a, b) => a["2025"] >= b["2025"])(monthly),
+      minMonth2025: by((a, b) => a["2025"] <= b["2025"])(monthly),
+      monthsWithGrowth: monthly.filter((m: M) => m.growthRate > 0).length,
+      monthsWithDecline: monthly.filter((m: M) => m.growthRate < 0).length,
+      bestGrowthMonth: by((a, b) => a.growthRate >= b.growthRate)(monthly),
+      worstGrowthMonth: by((a, b) => a.growthRate <= b.growthRate)(monthly),
+    };
+  },
+});
+
 // ============ DATOS DE COMPARACIÓN ============
 
 // Datos para gráfico de barras comparativo

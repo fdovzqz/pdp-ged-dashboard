@@ -1,14 +1,17 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
-  BarChart3, 
-  ArrowUpRight, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  BarChart3,
+  ArrowUpRight,
   ArrowDownRight,
-  Layers
+  Layers,
+  Loader2,
 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import {
   BarChart,
   Bar,
@@ -21,18 +24,27 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import {
-  monthlyComparisonData,
-  monthlyAccumulatedData,
-  annualTotals,
-  annualGrowth,
-  annualDailyAverages,
-  annualStats,
-  quarterlyData,
-  ANNUAL_YEAR_COLORS,
-} from '../../data/annualData';
+import { ANNUAL_YEAR_COLORS } from '../../constants/annual';
 
 type ViewMode = 'monthly' | 'accumulated';
+
+type AnnualMonthlyRow = {
+  month: number;
+  monthName: string;
+  "2024": number;
+  "2025": number;
+  difference: number;
+  growthRate: number;
+};
+
+type AnnualAccumulatedRow = {
+  month: number;
+  monthName: string;
+  "2024": number;
+  "2025": number;
+  accumulated2024: number;
+  accumulated2025: number;
+};
 
 // Tooltip personalizado - definido fuera del componente para evitar recreación en cada render
 const AnnualCustomTooltip = ({ active, payload, label }: {
@@ -82,10 +94,27 @@ const AnnualCustomTooltip = ({ active, payload, label }: {
 export const AnnualComparisonSection = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
-  // Preparar datos para gráficos
+  const monthlyData = useQuery(api.queries.getAnnualMonthlyData);
+  const monthlyAccumulated = useQuery(api.queries.getAnnualMonthlyAccumulated);
+  const totals = useQuery(api.queries.getAnnualTotals);
+  const growth = useQuery(api.queries.getAnnualGrowth);
+  const dailyAverages = useQuery(api.queries.getAnnualDailyAverages);
+  const quarterly = useQuery(api.queries.getAnnualQuarterlyData);
+  const stats = useQuery(api.queries.getAnnualStats);
+
+  const isLoading =
+    monthlyData === undefined ||
+    monthlyAccumulated === undefined ||
+    totals === undefined ||
+    growth === undefined ||
+    dailyAverages === undefined ||
+    quarterly === undefined ||
+    stats === undefined;
+
   const chartData = useMemo(() => {
+    if (!monthlyData || !monthlyAccumulated) return [];
     if (viewMode === 'monthly') {
-      return monthlyComparisonData.map((m) => ({
+      return monthlyData.map((m: AnnualMonthlyRow) => ({
         name: m.monthName.substring(0, 3),
         fullName: m.monthName,
         '2024': m['2024'],
@@ -94,14 +123,26 @@ export const AnnualComparisonSection = () => {
         growthRate: m.growthRate,
       }));
     }
-    return monthlyAccumulatedData.map((m) => ({
+    return monthlyAccumulated.map((m: AnnualAccumulatedRow) => ({
       name: m.monthName.substring(0, 3),
       fullName: m.monthName,
       '2024': m.accumulated2024,
       '2025': m.accumulated2025,
       difference: m.accumulated2025 - m.accumulated2024,
     }));
-  }, [viewMode]);
+  }, [viewMode, monthlyData, monthlyAccumulated]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-500 mb-4" />
+        <p className="text-slate-400">Cargando análisis anual…</p>
+      </div>
+    );
+  }
+
+  const dailyAvg2024 = Math.round(dailyAverages['2024'].sum / dailyAverages['2024'].days);
+  const dailyAvg2025 = Math.round(dailyAverages['2025'].sum / dailyAverages['2025'].days);
 
   return (
     <motion.div
@@ -164,14 +205,14 @@ export const AnnualComparisonSection = () => {
             <Calendar size={16} style={{ color: ANNUAL_YEAR_COLORS['2024'] }} />
           </div>
           <p className="text-3xl font-bold text-white mb-1">
-            {annualTotals['2024'].toLocaleString()}
+            {totals['2024'].toLocaleString()}
           </p>
           <p className="text-sm text-slate-400">pagos totales</p>
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">Prom. diario</span>
               <span className="font-semibold text-white">
-                {annualDailyAverages['2024'].toLocaleString()}
+                {dailyAvg2024.toLocaleString()}
               </span>
             </div>
           </div>
@@ -195,14 +236,14 @@ export const AnnualComparisonSection = () => {
             <Calendar size={16} style={{ color: ANNUAL_YEAR_COLORS['2025'] }} />
           </div>
           <p className="text-3xl font-bold text-white mb-1">
-            {annualTotals['2025'].toLocaleString()}
+            {totals['2025'].toLocaleString()}
           </p>
           <p className="text-sm text-slate-400">pagos totales</p>
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">Prom. diario</span>
               <span className="font-semibold text-white">
-                {annualDailyAverages['2025'].toLocaleString()}
+                {dailyAvg2025.toLocaleString()}
               </span>
             </div>
           </div>
@@ -214,21 +255,21 @@ export const AnnualComparisonSection = () => {
             <span className="text-sm font-bold px-3 py-1 rounded-full bg-emerald-500/30 text-emerald-400">
               Crecimiento
             </span>
-            {Number(annualGrowth.percentage) >= 0 ? (
+            {Number(growth.percentage) >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
               <TrendingDown size={16} className="text-red-400" />
             )}
           </div>
-          <p className={`text-3xl font-bold mb-1 ${Number(annualGrowth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {Number(annualGrowth.percentage) >= 0 ? '+' : ''}{annualGrowth.percentage}%
+          <p className={`text-3xl font-bold mb-1 ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
           </p>
           <p className="text-sm text-slate-400">año vs año</p>
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">Diferencia</span>
-              <span className={`font-semibold ${annualGrowth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {annualGrowth.absolute >= 0 ? '+' : ''}{annualGrowth.absolute.toLocaleString()}
+              <span className={`font-semibold ${growth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {growth.absolute >= 0 ? '+' : ''}{growth.absolute.toLocaleString()}
               </span>
             </div>
           </div>
@@ -243,16 +284,16 @@ export const AnnualComparisonSection = () => {
             <Layers size={16} className="text-cyan-400" />
           </div>
           <p className="text-3xl font-bold text-white mb-1">
-            {annualStats.maxMonth2025.monthName}
+            {stats.maxMonth2025.monthName}
           </p>
           <p className="text-sm text-slate-400">
-            {annualStats.maxMonth2025['2025'].toLocaleString()} pagos
+            {stats.maxMonth2025['2025'].toLocaleString()} pagos
           </p>
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">vs 2024</span>
-              <span className={`font-semibold ${annualStats.maxMonth2025.growthRate >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {annualStats.maxMonth2025.growthRate >= 0 ? '+' : ''}{annualStats.maxMonth2025.growthRate.toFixed(1)}%
+              <span className={`font-semibold ${stats.maxMonth2025.growthRate >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {stats.maxMonth2025.growthRate >= 0 ? '+' : ''}{stats.maxMonth2025.growthRate.toFixed(1)}%
               </span>
             </div>
           </div>
@@ -330,7 +371,7 @@ export const AnnualComparisonSection = () => {
               </tr>
             </thead>
             <tbody>
-              {monthlyComparisonData.map((month) => (
+              {monthlyData.map((month: AnnualMonthlyRow) => (
                 <tr key={month.month} className="border-b border-slate-700/30 hover:bg-slate-700/20">
                   <td className="py-2 px-3 text-white font-medium">{month.monthName}</td>
                   <td className="py-2 px-3 text-right text-pink-400">{month['2024'].toLocaleString()}</td>
@@ -353,19 +394,19 @@ export const AnnualComparisonSection = () => {
               {/* Total row */}
               <tr className="bg-slate-700/40 font-semibold">
                 <td className="py-3 px-3 text-white">Total Anual</td>
-                <td className="py-3 px-3 text-right text-pink-400">{annualTotals['2024'].toLocaleString()}</td>
-                <td className="py-3 px-3 text-right text-violet-400">{annualTotals['2025'].toLocaleString()}</td>
-                <td className={`py-3 px-3 text-right ${annualGrowth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {annualGrowth.absolute >= 0 ? '+' : ''}{annualGrowth.absolute.toLocaleString()}
+                <td className="py-3 px-3 text-right text-pink-400">{totals['2024'].toLocaleString()}</td>
+                <td className="py-3 px-3 text-right text-violet-400">{totals['2025'].toLocaleString()}</td>
+                <td className={`py-3 px-3 text-right ${growth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {growth.absolute >= 0 ? '+' : ''}{growth.absolute.toLocaleString()}
                 </td>
                 <td className="py-3 px-3 text-right">
-                  <span className={`inline-flex items-center gap-1 ${Number(annualGrowth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {Number(annualGrowth.percentage) >= 0 ? (
+                  <span className={`inline-flex items-center gap-1 ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {Number(growth.percentage) >= 0 ? (
                       <ArrowUpRight size={14} />
                     ) : (
                       <ArrowDownRight size={14} />
                     )}
-                    {Number(annualGrowth.percentage) >= 0 ? '+' : ''}{annualGrowth.percentage}%
+                    {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
                   </span>
                 </td>
               </tr>
@@ -379,8 +420,8 @@ export const AnnualComparisonSection = () => {
         <h4 className="text-sm font-semibold text-white mb-4">Comparación por Trimestre</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map((quarter, idx) => {
-            const val2024 = quarterlyData['2024'][quarter];
-            const val2025 = quarterlyData['2025'][quarter];
+            const val2024 = quarterly['2024'][quarter];
+            const val2025 = quarterly['2025'][quarter];
             const growth = val2024 > 0 ? ((val2025 - val2024) / val2024 * 100).toFixed(1) : '0';
             const quarterLabels = ['Ene-Mar', 'Abr-Jun', 'Jul-Sep', 'Oct-Dic'];
             
@@ -418,23 +459,23 @@ export const AnnualComparisonSection = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         <div className="bg-slate-700/30 rounded-xl p-4 text-center">
           <p className="text-slate-400 text-xs mb-1">Meses con crecimiento</p>
-          <p className="text-2xl font-bold text-emerald-400">{annualStats.monthsWithGrowth}</p>
+          <p className="text-2xl font-bold text-emerald-400">{stats.monthsWithGrowth}</p>
           <p className="text-slate-500 text-xs">de 12 meses</p>
         </div>
         <div className="bg-slate-700/30 rounded-xl p-4 text-center">
           <p className="text-slate-400 text-xs mb-1">Meses con descenso</p>
-          <p className="text-2xl font-bold text-red-400">{annualStats.monthsWithDecline}</p>
+          <p className="text-2xl font-bold text-red-400">{stats.monthsWithDecline}</p>
           <p className="text-slate-500 text-xs">de 12 meses</p>
         </div>
         <div className="bg-slate-700/30 rounded-xl p-4 text-center">
           <p className="text-slate-400 text-xs mb-1">Mayor crecimiento</p>
-          <p className="text-2xl font-bold text-emerald-400">+{annualStats.bestGrowthMonth.growthRate.toFixed(0)}%</p>
-          <p className="text-slate-500 text-xs">{annualStats.bestGrowthMonth.monthName}</p>
+          <p className="text-2xl font-bold text-emerald-400">+{stats.bestGrowthMonth.growthRate.toFixed(0)}%</p>
+          <p className="text-slate-500 text-xs">{stats.bestGrowthMonth.monthName}</p>
         </div>
         <div className="bg-slate-700/30 rounded-xl p-4 text-center">
           <p className="text-slate-400 text-xs mb-1">Mayor descenso</p>
-          <p className="text-2xl font-bold text-red-400">{annualStats.worstGrowthMonth.growthRate.toFixed(0)}%</p>
-          <p className="text-slate-500 text-xs">{annualStats.worstGrowthMonth.monthName}</p>
+          <p className="text-2xl font-bold text-red-400">{stats.worstGrowthMonth.growthRate.toFixed(0)}%</p>
+          <p className="text-slate-500 text-xs">{stats.worstGrowthMonth.monthName}</p>
         </div>
       </div>
     </motion.div>

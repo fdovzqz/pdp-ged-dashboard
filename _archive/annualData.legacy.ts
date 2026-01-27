@@ -1,3 +1,8 @@
+/**
+ * Archivado: migrado a Convex (monthlyData). Usado solo por scripts/validateAnnualConvex.ts.
+ * Los datos del Histórico Anual se obtienen de api.queries.getAnnual*.
+ */
+
 // Datos diarios completos para 2024 y 2025 - procesados desde CSV
 
 export interface DailyPayment {
@@ -324,7 +329,7 @@ export const quarterlyData = {
   },
 };
 
-// Colores para años
+// Colores para años (movidos a src/constants/annual.ts)
 export const ANNUAL_YEAR_COLORS = {
   '2024': '#f472b6', // Rosa
   '2025': '#8b5cf6', // Violeta

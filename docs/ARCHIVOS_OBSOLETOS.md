@@ -9,7 +9,7 @@ Estos archivos ya no son necesarios porque los datos ahora vienen de Convex:
 - `src/data/historicalData.ts` - Migrado a tabla `dailyData` y `hourlyDistribution`
 - `src/data/intradayData.ts` - Lógica migrada a `convex/queries.ts`
 - `src/data/today-intraday.ts` - Migrado a tabla `intradayData` y `intradayMeta`
-- `src/data/annualData.ts` - (revisar si se usa en otros dashboards)
+- `src/data/annualData.ts` - **Archivado** en `_archive/annualData.legacy.ts` (migrado a Convex `monthlyData` y queries `getAnnual*`). Solo se usa en `scripts/validateAnnualConvex.ts`.
 
 ## Scripts de Extracción (scripts/)
 

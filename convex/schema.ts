@@ -10,6 +10,13 @@ export default defineSchema({
     isComplete: v.boolean(), // true si el día terminó (23:59 MX)
   }).index("by_year_day", ["year", "day"]),
 
+  // Datos mensuales por año (histórico anual 2024, 2025, 2026)
+  monthlyData: defineTable({
+    year: v.number(), // 2024, 2025, (2026)
+    month: v.number(), // 1-12
+    events: v.number(), // Total de pagos del mes
+  }).index("by_year_month", ["year", "month"]),
+
   // Distribución horaria por tipo de día
   hourlyDistribution: defineTable({
     year: v.number(),

@@ -11,7 +11,11 @@
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "convex:seed": "convex run seedData:seedAllData",
-    "convex:clear": "convex run seedData:clearAllData"
+    "convex:seed:prod": "convex run seedData:seedAllData --prod",
+    "convex:seed-annual": "node scripts/seedAnnualToConvex.js",
+    "convex:seed-annual:prod": "node scripts/seedAnnualToConvex.js --prod",
+    "convex:clear": "convex run seedData:clearAllData",
+    "validate-annual": "npx tsx scripts/validateAnnualConvex.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.975.0",
@@ -29,6 +33,7 @@
     "recharts": "^3.7.0"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^24.10.1",

@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 // Datos históricos reales de Enero (Días 1-25) - De historicalData.ts
 const historicalData = [
@@ -335,6 +336,40 @@ export const seedIntradayData = mutation({
       recordsInserted: intradayData.length,
       totalEvents: 1200,
     };
+  },
+});
+
+// Seed de datos mensuales para Histórico Anual (2024, 2025)
+// Los datos se obtienen desde scripts/seedAnnualToConvex.js (annualData.ts o CSV)
+export const seedAnnualMonthlyData = mutation({
+  args: {
+    data: v.array(
+      v.object({
+        year: v.number(),
+        month: v.number(),
+        events: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    console.log("📅 Iniciando seed de monthlyData (histórico anual)...");
+
+    // Eliminar monthlyData existente para permitir re-seed (upsert)
+    const existing = await ctx.db.query("monthlyData").collect();
+    for (const doc of existing) {
+      await ctx.db.delete(doc._id);
+    }
+
+    for (const row of args.data) {
+      await ctx.db.insert("monthlyData", {
+        year: row.year,
+        month: row.month,
+        events: row.events,
+      });
+    }
+
+    console.log(`✅ monthlyData: ${args.data.length} registros insertados.`);
+    return { recordsInserted: args.data.length };
   },
 });
 
