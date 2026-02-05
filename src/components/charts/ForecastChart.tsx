@@ -177,7 +177,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradientProbable" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradientOptimista" x1="0" y1="0" x2="0" y2="1">
@@ -240,14 +240,14 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
               />
             )}
 
-            {/* Forecasts después (líneas punteadas más gruesas) */}
+            {/* Forecasts (líneas punteadas) */}
             {activeForecast.includes('conservador') && (
               <Area
                 name="Conservador"
                 type="monotone"
                 dataKey="conservador"
                 stroke={FORECAST_COLORS.conservador}
-                strokeWidth={3}
+                strokeWidth={2.5}
                 strokeDasharray="8 4"
                 fill="url(#gradientConservador)"
               />
@@ -255,11 +255,11 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
             
             {activeForecast.includes('probable') && (
               <Area
-                name="Probable"
+                name="Probable (recomendado)"
                 type="monotone"
                 dataKey="probable"
                 stroke={FORECAST_COLORS.probable}
-                strokeWidth={3}
+                strokeWidth={4}
                 strokeDasharray="8 4"
                 fill="url(#gradientProbable)"
               />
@@ -271,7 +271,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
                 type="monotone"
                 dataKey="optimista"
                 stroke={FORECAST_COLORS.optimista}
-                strokeWidth={3}
+                strokeWidth={2.5}
                 strokeDasharray="8 4"
                 fill="url(#gradientOptimista)"
               />

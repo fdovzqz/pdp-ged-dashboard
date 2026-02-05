@@ -166,7 +166,7 @@ export const AnnualComparisonSection = () => {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-w-0 overflow-hidden"
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-6">
@@ -417,62 +417,8 @@ export const AnnualComparisonSection = () => {
         </div>
       </div>
 
-      {/* Monthly Details Table */}
-      <div className="bg-slate-700/30 rounded-xl p-3 sm:p-4 mb-6 -mx-2 sm:mx-0">
-        <h4 className="text-sm font-semibold text-white mb-4 px-2 sm:px-0">Detalle Mensual</h4>
-        <div className="overflow-x-auto -mx-1 px-1">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-slate-400 border-b border-slate-600/50">
-                <th className="text-left py-2 px-3">Mes</th>
-                <th className="text-right py-2 px-3">2024</th>
-                <th className="text-right py-2 px-3">2025</th>
-                <th className="text-right py-2 px-3">2026</th>
-                <th className="text-right py-2 px-3">2024→2025</th>
-                <th className="text-right py-2 px-3">2025→2026</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyData.map((month: AnnualMonthlyRow) => (
-                <tr key={month.month} className="border-b border-slate-700/30 hover:bg-slate-700/20">
-                  <td className="py-2 px-3 text-white font-medium">{month.monthName}</td>
-                  <td className="py-2 px-3 text-right text-pink-400">{month['2024'].toLocaleString()}</td>
-                  <td className="py-2 px-3 text-right text-violet-400">{month['2025'].toLocaleString()}</td>
-                  <td className="py-2 px-3 text-right text-emerald-400">{month['2026'].toLocaleString()}</td>
-                  <td className={`py-2 px-3 text-right ${month.difference >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    <span className="inline-flex items-center gap-1">
-                      {month.growthRate >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                      {month.growthRate >= 0 ? '+' : ''}{month.growthRate.toFixed(1)}%
-                    </span>
-                  </td>
-                  <td className="py-2 px-3 text-right">
-                    <span className={`inline-flex items-center gap-1 ${(month.growthRate2026 ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {(month.growthRate2026 ?? 0) >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                      {(month.growthRate2026 ?? 0) >= 0 ? '+' : ''}{(month.growthRate2026 ?? 0).toFixed(1)}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {/* Total row */}
-              <tr className="bg-slate-700/40 font-semibold">
-                <td className="py-3 px-3 text-white">Total</td>
-                <td className="py-3 px-3 text-right text-pink-400">{totals['2024'].toLocaleString()}</td>
-                <td className="py-3 px-3 text-right text-violet-400">{totals['2025'].toLocaleString()}</td>
-                <td className="py-3 px-3 text-right text-emerald-400">{totals['2026'].toLocaleString()}</td>
-                <td className={`py-3 px-3 text-right ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
-                </td>
-                <td className={`py-3 px-3 text-right ${Number(growth.percentage2026) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Number(growth.percentage2026) >= 0 ? '+' : ''}{growth.percentage2026}%
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Quarterly Comparison */}
-      <div className="bg-slate-700/30 rounded-xl p-4">
+      {/* Quarterly Comparison - Sección prominente */}
+      <div className="bg-slate-700/30 rounded-xl p-6 mb-6">
         <h4 className="text-sm font-semibold text-white mb-4">Comparación por Trimestre</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map((quarter, idx) => {
@@ -517,6 +463,65 @@ export const AnnualComparisonSection = () => {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Monthly Details Table - con heat styling */}
+      <div className="bg-slate-700/30 rounded-xl p-4 mb-6">
+        <h4 className="text-sm font-semibold text-white mb-4">Detalle Mensual</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-slate-400 border-b border-slate-600/50">
+                <th className="text-left py-3 px-4">Mes</th>
+                <th className="text-right py-3 px-4 tabular-nums">2024</th>
+                <th className="text-right py-3 px-4 tabular-nums">2025</th>
+                <th className="text-right py-3 px-4 tabular-nums">2026</th>
+                <th className="text-right py-3 px-4">2024→2025</th>
+                <th className="text-right py-3 px-4">2025→2026</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map((month: AnnualMonthlyRow) => {
+                const growthRate = month.growthRate;
+                const growthRate2026 = month.growthRate2026 ?? 0;
+                const heatBg2024 = growthRate >= 20 ? 'bg-emerald-500/20' : growthRate >= 10 ? 'bg-emerald-500/10' : growthRate >= 0 ? '' : growthRate >= -10 ? 'bg-red-500/10' : 'bg-red-500/20';
+                const heatBg2026 = growthRate2026 >= 20 ? 'bg-emerald-500/20' : growthRate2026 >= 10 ? 'bg-emerald-500/10' : growthRate2026 >= 0 ? '' : growthRate2026 >= -10 ? 'bg-red-500/10' : 'bg-red-500/20';
+                return (
+                  <tr key={month.month} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-3 px-4 text-white font-medium">{month.monthName}</td>
+                    <td className="py-3 px-4 text-right text-pink-400 tabular-nums">{month['2024'].toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-violet-400 tabular-nums">{month['2025'].toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-emerald-400 tabular-nums">{month['2026'].toLocaleString()}</td>
+                    <td className={`py-3 px-4 text-right rounded ${heatBg2024} ${growthRate >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className="inline-flex items-center gap-1">
+                        {growthRate >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                        {growthRate >= 0 ? '+' : ''}{growthRate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className={`py-3 px-4 text-right rounded ${heatBg2026} ${growthRate2026 >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <span className="inline-flex items-center gap-1">
+                        {growthRate2026 >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                        {growthRate2026 >= 0 ? '+' : ''}{growthRate2026.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr className="bg-slate-700/40 font-semibold">
+                <td className="py-4 px-4 text-white">Total</td>
+                <td className="py-4 px-4 text-right text-pink-400 tabular-nums">{totals['2024'].toLocaleString()}</td>
+                <td className="py-4 px-4 text-right text-violet-400 tabular-nums">{totals['2025'].toLocaleString()}</td>
+                <td className="py-4 px-4 text-right text-emerald-400 tabular-nums">{totals['2026'].toLocaleString()}</td>
+                <td className={`py-4 px-4 text-right ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
+                </td>
+                <td className={`py-4 px-4 text-right ${Number(growth.percentage2026) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(growth.percentage2026) >= 0 ? '+' : ''}{growth.percentage2026}%
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

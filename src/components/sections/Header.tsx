@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Building2, Activity, Calendar, Clock, Zap, Download, Maximize2 } from 'lucide-react';
+import { Building2, Activity, Calendar, Clock, Download, Maximize2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 
@@ -30,9 +30,9 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
       transition={{ duration: 0.6 }}
       className="mb-10"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6 min-w-0">
         {/* Logo and Title */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink">
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500/30 blur-xl rounded-full" />
             <div className="relative bg-linear-to-br from-emerald-400 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-500/20">
@@ -45,8 +45,11 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
               <h1 className="text-3xl font-bold bg-linear-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent font-display">
                 Portal de Pagos
               </h1>
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full">
-                <Zap size={12} />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/25 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/40">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
                 LIVE
               </span>
             </div>
@@ -58,7 +61,7 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
         </div>
 
         {/* Actions and Info */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 shrink-0">
           {/* Period Badge */}
           <div className="flex items-center gap-2 sm:gap-3 bg-slate-800/60 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-slate-700/50">
             <Calendar size={18} className="text-emerald-500" />

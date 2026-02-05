@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import {
   LineChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { Layers, BarChart2, TrendingUp, Loader2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
@@ -86,12 +88,17 @@ export const HistoricalChart = memo(function HistoricalChart({
 
   const chartData = viewMode === 'daily' ? historicalData : accumulatedData;
 
+  // Promedio diario para línea de referencia (solo en modo diario)
+  const avgDaily2026 = historicalData.length > 0
+    ? Math.round(historicalData.reduce((s, d) => s + d['2026'], 0) / historicalData.length)
+    : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="col-span-2 bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className="col-span-2 bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-w-0 overflow-hidden"
     >
       <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6">
         <div>
@@ -149,7 +156,7 @@ export const HistoricalChart = memo(function HistoricalChart({
       </div>
 
       <div
-        className={`h-[400px] w-full ${onDaySelect ? 'cursor-pointer' : ''}`}
+        className={`h-[450px] w-full ${onDaySelect ? 'cursor-pointer' : ''}`}
         role={onDaySelect ? 'button' : undefined}
         tabIndex={onDaySelect ? 0 : undefined}
         onKeyDown={
@@ -184,6 +191,15 @@ export const HistoricalChart = memo(function HistoricalChart({
                 <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
             </defs>
+
+            {viewMode === 'daily' && avgDaily2026 > 0 && (
+              <ReferenceLine
+                y={avgDaily2026}
+                stroke="#64748b"
+                strokeDasharray="4 4"
+                strokeOpacity={0.6}
+              />
+            )}
             
             <CartesianGrid
               strokeDasharray="3 3"
@@ -231,20 +247,29 @@ export const HistoricalChart = memo(function HistoricalChart({
             )}
             
             {activeYears.includes('2026') && (
-              <Line
-                name="2026"
-                type="monotone"
-                dataKey="2026"
-                stroke={YEAR_COLORS['2026']}
-                strokeWidth={4}
-                dot={{
-                  r: 4,
-                  fill: YEAR_COLORS['2026'],
-                  strokeWidth: 2,
-                  stroke: '#1e293b',
-                }}
-                activeDot={{ r: 8, strokeWidth: 0 }}
-              />
+              <>
+                <Area
+                  type="monotone"
+                  dataKey="2026"
+                  fill="url(#gradient2026)"
+                  stroke="none"
+                  isAnimationActive={false}
+                />
+                <Line
+                  name="2026"
+                  type="monotone"
+                  dataKey="2026"
+                  stroke={YEAR_COLORS['2026']}
+                  strokeWidth={4}
+                  dot={{
+                    r: 4,
+                    fill: YEAR_COLORS['2026'],
+                    strokeWidth: 2,
+                    stroke: '#1e293b',
+                  }}
+                  activeDot={{ r: 8, strokeWidth: 0 }}
+                />
+              </>
             )}
           </LineChart>
         </ResponsiveContainer>

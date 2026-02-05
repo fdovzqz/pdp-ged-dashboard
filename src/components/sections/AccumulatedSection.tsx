@@ -93,7 +93,7 @@ export const AccumulatedSection = ({ month = 1, monthName = 'Enero' }: Accumulat
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+      className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 sm:p-8 min-w-0 overflow-hidden"
     >
       <div className="flex items-center gap-2 mb-6">
         <BarChart3 size={20} className="text-emerald-400" />
@@ -103,7 +103,7 @@ export const AccumulatedSection = ({ month = 1, monthName = 'Enero' }: Accumulat
       </div>
 
       {/* Main comparison cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
         {years.map((year) => (
           <div
             key={year}
@@ -143,13 +143,13 @@ export const AccumulatedSection = ({ month = 1, monthName = 'Enero' }: Accumulat
       </div>
 
       {/* Growth comparison */}
-      <div className="bg-slate-700/30 rounded-xl p-4">
+      <div className="bg-slate-700/30 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={16} className="text-emerald-400" />
+          <TrendingUp size={16} className="text-emerald-400 shrink-0" />
           <h4 className="text-sm font-semibold text-white">Crecimiento Año vs Año (al día {lastAvailableDay})</h4>
         </div>
         
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div className="p-3 bg-slate-800/50 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">2024 → 2025</p>
             <p className="text-lg font-bold text-violet-400">+{growth2025vs2024}%</p>
@@ -175,9 +175,9 @@ export const AccumulatedSection = ({ month = 1, monthName = 'Enero' }: Accumulat
       </div>
 
       {/* Progress bars */}
-      <div className="mt-6">
-        <h4 className="text-sm font-semibold text-slate-400 mb-3">Comparativa visual</h4>
-        <div className="space-y-3">
+      <div className="mt-8">
+        <h4 className="text-sm font-semibold text-slate-400 mb-4">Comparativa visual</h4>
+        <div className="space-y-4">
           {years.map((year) => {
             const percentage = totals['2026'] > 0 ? (totals[year] / totals['2026']) * 100 : 0;
             return (

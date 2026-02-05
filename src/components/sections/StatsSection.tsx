@@ -105,20 +105,20 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 min-w-0">
       {/* Weekday vs Weekend */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.35 }}
-        className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+        className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-w-0 overflow-hidden"
       >
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
-          <Calendar size={18} className="text-cyan-400" />
+        <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2 font-display">
+          <Calendar size={18} className="text-cyan-400 shrink-0" />
           Lunes a Viernes vs Fin de Semana
         </h3>
         
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {years.map((year) => {
             const { weekday: w, weekend: s } = normalizeWeekdayWeekend(
               weekdayWeekendStats[year],
@@ -128,7 +128,7 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
             return (
               <div
                 key={year}
-                className="grid grid-cols-[50px_1fr_1fr] sm:grid-cols-[60px_1fr_1fr] gap-2 sm:gap-3 items-center"
+                className="grid grid-cols-[auto_1fr_1fr] gap-3 items-center min-w-0"
               >
                 <span
                   className="font-semibold inline-flex items-center justify-center -rotate-90 text-xs sm:text-sm"
@@ -147,7 +147,7 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
                   </div>
                 </div>
 
-                <div className="bg-slate-700/40 rounded-lg p-4">
+                <div className="bg-slate-700/40 rounded-lg p-4 min-w-0">
                   <div className="text-[11px] text-slate-400 mb-1">S-D ({s.days} días)</div>
                   <div className="font-bold text-white">
                     Ø {s.days > 0 ? Math.round(s.sum / s.days).toLocaleString() : 0}
@@ -167,35 +167,34 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6"
+        className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-w-0 overflow-hidden"
       >
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
-          <Activity size={18} className="text-amber-500" />
+        <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2 font-display">
+          <Activity size={18} className="text-amber-500 shrink-0" />
           Distribución por Semana
         </h3>
         
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4 overflow-x-auto">
           {years.map((year) => {
             const a = normalizePeriod(periodStats[year].arranque, 'arranque', year, lastAvailableDay);
             const m = normalizePeriod(periodStats[year].medio, 'medio', year, lastAvailableDay);
             const c = normalizePeriod(periodStats[year].cierre, 'cierre', year, lastAvailableDay);
-            // Rangos efectivos según días con datos: Arranque 1-7, Medio 8-24, Cierre 25-31
             const labelArranque = a.days > 0 ? `1-${Math.min(7, a.days)}` : '1-7';
             const labelMedio = m.days > 0 ? `8-${Math.min(24, 7 + m.days)}` : '8-24';
             const labelCierre = c.days > 0 ? `25-${Math.min(31, 24 + c.days)}` : '25-31';
             return (
               <div
                 key={year}
-                className="grid grid-cols-[50px_1fr_1fr_1fr] sm:grid-cols-[60px_1fr_1fr_1fr] gap-1.5 sm:gap-3 items-center"
+                className="grid grid-cols-[auto_1fr_1fr_1fr] gap-3 items-center min-w-0"
               >
                 <span
-                  className="font-semibold inline-flex items-center justify-center -rotate-90 text-xs sm:text-sm"
+                  className="font-semibold w-10 shrink-0 text-center text-xs sm:text-sm"
                   style={{ color: YEAR_COLORS[year] }}
                 >
                   {year}
                 </span>
 
-                <div className="bg-slate-700/40 rounded-lg p-4">
+                <div className="bg-slate-700/40 rounded-lg p-4 min-w-0">
                   <div className="text-[11px] text-slate-400 mb-1">
                     Arranque ({labelArranque})
                   </div>
@@ -207,7 +206,7 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
                   </div>
                 </div>
 
-                <div className="bg-slate-700/40 rounded-lg p-4">
+                <div className="bg-slate-700/40 rounded-lg p-4 min-w-0">
                   <div className="text-[11px] text-slate-400 mb-1">
                     Medio ({labelMedio})
                   </div>
@@ -219,7 +218,7 @@ export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
                   </div>
                 </div>
 
-                <div className="bg-slate-700/40 rounded-lg p-4">
+                <div className="bg-slate-700/40 rounded-lg p-4 min-w-0">
                   <div className="text-[11px] text-slate-400 mb-1">
                     Cierre ({labelCierre})
                   </div>

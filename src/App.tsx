@@ -30,17 +30,17 @@ const App = () => {
         <Route path="/" element={<DashboardLayout />}>
           <Route index element={
             <Suspense fallback={<PageLoader />}>
+              <CurrentMonthDashboard />
+            </Suspense>
+          } />
+          <Route path="enero" element={
+            <Suspense fallback={<PageLoader />}>
               <JanuaryDashboard />
             </Suspense>
           } />
           <Route path="annual" element={
             <Suspense fallback={<PageLoader />}>
               <AnnualDashboard />
-            </Suspense>
-          } />
-          <Route path="current-month" element={
-            <Suspense fallback={<PageLoader />}>
-              <CurrentMonthDashboard />
             </Suspense>
           } />
         </Route>

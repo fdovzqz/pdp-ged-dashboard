@@ -59,7 +59,7 @@ export interface HourlyData {
   '2026': number;
 }
 
-/** Datos intradía por hora (usado por fetchCloudWatch para generar JSON) */
+/** Datos intradía por hora (desde Convex intradayData) */
 export interface IntradayHourData {
   hour: number;
   events: number;
@@ -80,6 +80,12 @@ export interface KPICardProps {
   trend?: 'up' | 'down';
   trendValue?: string;
   accent?: boolean;
+  /** Delta absoluto para mostrar junto al porcentaje (ej: +2,450) */
+  absoluteDelta?: number;
+  /** Datos para sparkline mini (últimos 7 días) */
+  sparklineData?: number[];
+  /** Texto adicional en tooltip al hover */
+  tooltip?: string;
 }
 
 export interface YearBadgeProps {

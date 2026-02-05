@@ -84,31 +84,31 @@ export const DashboardLayout = () => {
   }, []);
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+    `flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
       isActive
-        ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
+        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-500/50'
         : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
     }`;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-white font-sans">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-white font-sans overflow-x-hidden">
       {/* Background Pattern */}
       <div className="fixed inset-0 opacity-30 dot-pattern pointer-events-none" />
 
       {/* Main Content */}
-      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:px-8">
+      <div ref={contentRef} className="relative z-10 w-full max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8 min-w-0">
         {/* Header */}
         <Header onExport={handleExport} onFullscreen={handleFullscreen} isExporting={isExporting} />
 
         {/* Navigation */}
         <nav className="flex flex-wrap gap-2 mb-8 bg-slate-900/50 p-1 rounded-xl border border-slate-800/50 backdrop-blur-md w-full sm:w-fit">
           <NavLink to="/" className={navLinkClass} end>
-            <LayoutDashboard size={18} />
-            Análisis Enero
-          </NavLink>
-          <NavLink to="/current-month" className={navLinkClass}>
             <CalendarDays size={18} />
             Mes Actual
+          </NavLink>
+          <NavLink to="/enero" className={navLinkClass}>
+            <LayoutDashboard size={18} />
+            Análisis Enero
           </NavLink>
           <NavLink to="/annual" className={navLinkClass}>
             <CalendarRange size={18} />
@@ -117,8 +117,8 @@ export const DashboardLayout = () => {
         </nav>
 
         {/* Page Content */}
-        <main>
-            <Outlet />
+        <main className="min-w-0">
+          <Outlet />
         </main>
 
         {/* Footer */}

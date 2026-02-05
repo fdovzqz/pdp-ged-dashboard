@@ -4,6 +4,7 @@ export { InsightsSection } from './InsightsSection';
 export { StatsSection } from './StatsSection';
 export { AccumulatedSection } from './AccumulatedSection';
 export { AnnualComparisonSection } from './AnnualComparisonSection';
+export { AnnualInsightsSection } from './AnnualInsightsSection';
 export { IntradaySection } from './IntradaySection';
 export { DayDetailModal } from './DayDetailModal';
 export { Footer } from './Footer';

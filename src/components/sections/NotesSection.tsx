@@ -61,9 +61,9 @@ export const NotesSection = ({ month = 1, monthName = 'Enero' }: NotesSectionPro
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.45 }}
-      className="bg-linear-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm rounded-3xl border border-slate-600/30 p-6"
+      className="bg-linear-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm rounded-2xl border border-slate-600/30 p-6 min-w-0 overflow-hidden col-span-full"
     >
-      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
+      <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2 font-display">
         <AlertTriangle size={18} className="text-amber-400" />
         Notas Importantes para el Análisis
       </h3>
@@ -74,9 +74,9 @@ export const NotesSection = ({ month = 1, monthName = 'Enero' }: NotesSectionPro
           return (
             <div
               key={note.id}
-              className={`${styles.bg} border ${styles.border} rounded-xl p-4`}
+              className={`${styles.bg} border ${styles.border} rounded-xl p-5 min-w-0`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <div className={`${styles.badge} p-2 rounded-lg shrink-0`}>
                   {note.yearLabel ? (
                     <span className={`text-sm font-bold ${styles.text}`}>{note.yearLabel}</span>
@@ -84,7 +84,7 @@ export const NotesSection = ({ month = 1, monthName = 'Enero' }: NotesSectionPro
                     <CheckCircle size={16} className={styles.text} />
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-slate-200 leading-relaxed">
                     {getDisplayContent(note.content)}
                   </p>

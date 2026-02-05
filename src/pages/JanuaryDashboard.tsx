@@ -31,6 +31,7 @@ export const JanuaryDashboard = () => {
 
   // Convex queries (mes 1 = Enero)
   const totals = useQuery(api.queries.getTotals, { month: 1 });
+  const historicalData = useQuery(api.queries.getHistoricalData, { month: 1 });
   const dailyAverages = useQuery(api.queries.getDailyAverages, { month: 1 });
   const growthMetrics = useQuery(api.queries.getGrowthMetrics, { month: 1 });
   const historicalMax = useQuery(api.queries.getHistoricalMax, { month: 1 });
@@ -43,6 +44,10 @@ export const JanuaryDashboard = () => {
     }
 
     const currentDay = lastAvailableDay ?? 31;
+    const absoluteDelta = totals['2026'] - totals['2025'];
+    const sparklineData = historicalData
+      ? historicalData.slice(-7).map((d) => d['2026'])
+      : undefined;
 
     return {
       totalEvents: totals['2026'].toLocaleString(),
@@ -53,8 +58,10 @@ export const JanuaryDashboard = () => {
       growthVs2025: `+${growthMetrics.growth25vs26}%`,
       maxValue: historicalMax.value.toLocaleString(),
       maxDate: `${historicalMax.day} de Enero ${historicalMax.year}`,
+      absoluteDelta,
+      sparklineData,
     };
-  }, [totals, dailyAverages, growthMetrics, historicalMax, lastAvailableDay]);
+  }, [totals, dailyAverages, growthMetrics, historicalMax, lastAvailableDay, historicalData]);
 
   // Loading state
   if (!kpiData) {
@@ -69,9 +76,9 @@ export const JanuaryDashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in duration-500 min-w-0 max-w-full">
       {/* Context Header */}
-      <div className="flex items-center gap-3 mb-6 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+      <div className="flex items-center gap-3 mb-6 bg-slate-800/40 p-5 rounded-xl border border-slate-700/50 backdrop-blur-sm min-w-0">
         <Info className="text-emerald-400" size={24} />
         <div>
           <h2 className="text-lg font-bold text-white">Análisis Completo: Enero 2026</h2>
@@ -105,6 +112,9 @@ export const JanuaryDashboard = () => {
           trend="up"
           trendValue={kpiData.growthVs2025}
           accent
+          absoluteDelta={kpiData.absoluteDelta}
+          sparklineData={kpiData.sparklineData}
+          tooltip="Tendencia de los últimos 7 días del mes"
         />
         <KPICard
           title="Crecimiento Bianual"
@@ -126,26 +136,26 @@ export const JanuaryDashboard = () => {
         />
       </motion.div>
 
-      {/* Main Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Gráfico Principal - Full width */}
+      <div className="w-full">
         <HistoricalChart
           activeYears={activeYears}
           onToggleYear={toggleYear}
         />
       </div>
 
-      {/* Accumulated Section */}
-      <div>
+      {/* Acumulado - Sección completa para mejor legibilidad */}
+      <div className="min-w-0">
         <AccumulatedSection />
       </div>
 
-      {/* Stats Section */}
-      <div>
+      {/* Stats - L-V vs S-D y Distribución por Semana */}
+      <div className="min-w-0">
         <StatsSection />
       </div>
 
-      {/* New Charts Row: Hourly + Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Hourly + Heatmap */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 min-w-0">
         <HourlyChart 
           activeYears={activeYears}
           onToggleYear={toggleYear}
@@ -153,13 +163,9 @@ export const JanuaryDashboard = () => {
         <HeatmapChart year="2026" onDaySelect={setSelectedDay} />
       </div>
 
-      {/* Notes Section */}
-      <div>
+      {/* Notes e Insights - 2 columnas: Análisis Estratégico | Resumen Cierre + Rápido */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
         <NotesSection />
-      </div>
-
-      {/* Insights Section */}
-      <div>
         <InsightsSection />
       </div>
 

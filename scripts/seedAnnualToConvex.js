@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Parsea un CSV diario (fecha, total_events) y agrega por (year, month).
- * Aplica UTC-6 (México) como en processCSV.js.
+ * Aplica UTC-6 (México) para consistencia con el pipeline de Convex.
  * @returns {Map<string, number>} clave "YYYY-M" → suma de events
  */
 function parseAndAggregateByMonth(filePath) {

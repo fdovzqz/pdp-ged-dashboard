@@ -1,6 +1,6 @@
 /**
  * Constantes para el Histórico Anual (2024 vs 2025).
- * Extraídas de annualData.ts para uso en AnnualComparisonSection y Convex.
+ * Para AnnualComparisonSection (Histórico Anual).
  */
 
 export const ANNUAL_YEAR_COLORS = {

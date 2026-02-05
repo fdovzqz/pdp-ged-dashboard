@@ -77,24 +77,40 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
     return weeks;
   }, [year, month, lastAvailableDay]);
   
+  // Escala single-hue emerald (más sutil y ejecutiva)
   const getIntensityColor = (value: number): string => {
     const intensity = value / maxValue;
-    // Escala de colores cálidos: amarillo → naranja → rojo → guinda
-    if (intensity < 0.15) return 'bg-yellow-100';          // Muy bajo - amarillo muy claro
-    if (intensity < 0.30) return 'bg-yellow-300';          // Bajo - amarillo
-    if (intensity < 0.45) return 'bg-amber-400';           // Medio-bajo - amarillo/naranja
-    if (intensity < 0.60) return 'bg-orange-500';          // Medio - naranja
-    if (intensity < 0.75) return 'bg-red-500';             // Medio-alto - rojo
-    if (intensity < 0.90) return 'bg-red-700';             // Alto - rojo oscuro
-    return 'bg-rose-900';                                  // Máximo - guinda
+    if (intensity < 0.15) return 'bg-emerald-950/80';
+    if (intensity < 0.30) return 'bg-emerald-900/90';
+    if (intensity < 0.45) return 'bg-emerald-800';
+    if (intensity < 0.60) return 'bg-emerald-600';
+    if (intensity < 0.75) return 'bg-emerald-500';
+    if (intensity < 0.90) return 'bg-emerald-400';
+    return 'bg-emerald-300';
   };
 
   const getTextColor = (value: number): string => {
     const intensity = value / maxValue;
-    // Texto oscuro para fondos claros, blanco para fondos oscuros
-    if (intensity < 0.45) return 'text-slate-800';
-    return 'text-white';
+    if (intensity < 0.60) return 'text-white';
+    return 'text-slate-900';
   };
+
+  // Mini-stats del mes
+  const stats = useMemo(() => {
+    if (!heatmapData || heatmapData.length === 0) return { min: 0, max: 0, avg: 0 };
+    const values = heatmapData.map((d) => d.value);
+    const sum = values.reduce((a, b) => a + b, 0);
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      avg: Math.round(sum / values.length),
+    };
+  }, [heatmapData]);
+
+  // Día actual (para indicador pulsante)
+  const now = new Date();
+  const isCurrentMonth = now.getMonth() + 1 === month && now.getFullYear() === parseInt(year);
+  const currentDay = isCurrentMonth ? now.getDate() : null;
 
   const getDayValue = (day: number): number => {
     if (!heatmapData) return 0;
@@ -158,7 +174,7 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
       >
         <div className="flex items-center justify-center min-h-[200px]">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
             <p className="text-slate-400 text-sm">Cargando mapa de calor...</p>
           </div>
         </div>
@@ -171,11 +187,11 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6 overflow-visible"
+      className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 min-w-0"
     >
       <div className="mb-4">
         <h3 className="text-lg font-bold text-white flex items-center gap-2 font-display">
-          <Calendar size={18} className="text-orange-400" />
+          <Calendar size={18} className="text-emerald-400" />
           Mapa de Calor - {monthName} {year}
         </h3>
         {onDaySelect && (
@@ -200,7 +216,7 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
                   : 'translate(-50%, 0%)',
               }}
             >
-              <p className="text-orange-400 font-bold text-sm">Día {hoveredCell.day}</p>
+              <p className="text-emerald-400 font-bold text-sm">Día {hoveredCell.day}</p>
               <p className="text-white font-semibold">{hoveredCell.value.toLocaleString()} pagos</p>
             </motion.div>
           )}
@@ -236,11 +252,12 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
                     onKeyDown={(e) => day && onDaySelect && e.key === 'Enter' && onDaySelect(day)}
                     className={`
                       aspect-square rounded-md flex items-center justify-center
-                      text-xs font-medium
+                      text-xs font-medium tabular-nums
                       transition-all duration-200
-                      ${day && onDaySelect ? 'cursor-pointer hover:scale-110 hover:z-10 hover:ring-2 hover:ring-orange-400' : ''}
+                      ${day && onDaySelect ? 'cursor-pointer hover:scale-110 hover:z-10 hover:ring-2 hover:ring-emerald-400' : ''}
                       ${day ? getIntensityColor(value) : 'bg-slate-700/20'}
                       ${day ? getTextColor(value) : 'text-transparent'}
+                      ${day === currentDay ? 'ring-2 ring-emerald-400 animate-pulse-soft' : ''}
                     `}
                     onMouseEnter={(e) => day && handleMouseEnter(day, value, e)}
                     onMouseLeave={() => setHoveredCell(null)}
@@ -255,19 +272,25 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 
         </div>
       </div>
       
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-2 mt-4 text-xs">
-        <span className="text-slate-400">Menos</span>
-        <div className="flex gap-0.5">
-          <div className="w-4 h-4 rounded bg-yellow-100" />
-          <div className="w-4 h-4 rounded bg-yellow-300" />
-          <div className="w-4 h-4 rounded bg-amber-400" />
-          <div className="w-4 h-4 rounded bg-orange-500" />
-          <div className="w-4 h-4 rounded bg-red-500" />
-          <div className="w-4 h-4 rounded bg-red-700" />
-          <div className="w-4 h-4 rounded bg-rose-900" />
+      {/* Legend con mini-stats */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-slate-700/50">
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-slate-400">Menos</span>
+          <div className="flex gap-0.5">
+            <div className="w-4 h-4 rounded bg-emerald-950/80" />
+            <div className="w-4 h-4 rounded bg-emerald-800" />
+            <div className="w-4 h-4 rounded bg-emerald-600" />
+            <div className="w-4 h-4 rounded bg-emerald-500" />
+            <div className="w-4 h-4 rounded bg-emerald-400" />
+            <div className="w-4 h-4 rounded bg-emerald-300" />
+          </div>
+          <span className="text-slate-400">Más</span>
         </div>
-        <span className="text-slate-400">Más</span>
+        <div className="flex gap-4 text-xs text-slate-400">
+          <span>Mín: <strong className="text-white tabular-nums">{stats.min.toLocaleString()}</strong></span>
+          <span>Prom: <strong className="text-white tabular-nums">{stats.avg.toLocaleString()}</strong></span>
+          <span>Máx: <strong className="text-emerald-400 tabular-nums">{stats.max.toLocaleString()}</strong></span>
+        </div>
       </div>
     </motion.div>
   );

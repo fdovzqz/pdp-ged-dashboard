@@ -139,6 +139,17 @@ export const IntradaySection = ({ monthName = 'Enero' }: IntradaySectionProps) =
 
   const { currentDay, hoursRemaining, statistics, lastExtraction } = intradayData;
 
+  // Gauge: % completado hacia proyección probable
+  const progressPct = forecast.probable > 0
+    ? Math.min(100, Math.round((statistics.currentTotal / forecast.probable) * 100))
+    : 0;
+
+  // Velocidad: pagos/hora promedio últimas 3 horas
+  const last3HoursData = todayData.filter((h) => h.hour >= Math.max(0, currentHour - 2) && h.hour <= currentHour);
+  const velocity = last3HoursData.length > 0
+    ? Math.round(last3HoursData.reduce((s, h) => s + h.events, 0) / last3HoursData.length)
+    : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -146,29 +157,46 @@ export const IntradaySection = ({ monthName = 'Enero' }: IntradaySectionProps) =
       transition={{ duration: 0.6, delay: 0.2 }}
       className={`bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm rounded-3xl border p-6 transition-all duration-500 ${
         justUpdated
-          ? 'border-emerald-400/70 shadow-[0_0_30px_rgba(16,185,129,0.45)]'
+          ? 'border-emerald-400/70 glow-success'
           : 'border-slate-700/50'
       }`}
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-amber-500/20">
-          <Clock size={20} className="text-amber-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/20">
+            <Clock size={20} className="text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
+              Seguimiento Intradía - Día {currentDay} de {monthName}
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              Progreso del día actual vs histórico · {getHoursRemainingFormatted(hoursRemaining)} restantes
+              {lastExtraction && (
+                <span className="text-emerald-400"> · Actualizado: {lastExtraction}</span>
+              )}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
-            Seguimiento Intradía - Día {currentDay} de {monthName}
-          </h3>
-          <p className="text-sm text-slate-400 mt-1">
-            Progreso del día actual vs histórico · {getHoursRemainingFormatted(hoursRemaining)} restantes
-            {lastExtraction && (
-              <span className="text-emerald-400"> (extracción: {lastExtraction})</span>
-            )}
-          </p>
+        {/* Gauge de progreso del día */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="text-right">
+            <p className="text-xs text-slate-400">Progreso vs proyección</p>
+            <p className="text-2xl font-bold text-emerald-400 tabular-nums">{progressPct}%</p>
+          </div>
+          <div className="w-24 h-3 bg-slate-700 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="h-full bg-emerald-500 rounded-full"
+            />
+          </div>
         </div>
       </div>
 
       {/* KPIs Intradía */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
           <div className="text-emerald-400 text-xs font-medium mb-1">Total Actual</div>
           <p className="text-2xl font-bold text-white">
@@ -207,6 +235,18 @@ export const IntradaySection = ({ monthName = 'Enero' }: IntradaySectionProps) =
           </p>
           <p className="text-xs text-slate-400 mt-1">
             {historicalComparison['2025'].toLocaleString()} en 2025
+          </p>
+        </div>
+        <div className="bg-slate-700/50 border border-slate-600/50 rounded-xl p-4">
+          <div className="text-amber-400 text-xs font-medium mb-1 flex items-center gap-1">
+            <TrendingUp size={12} />
+            Velocidad
+          </div>
+          <p className="text-xl font-bold text-white tabular-nums">
+            {velocity.toLocaleString()}
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            pagos/hora (últ. 3h)
           </p>
         </div>
       </div>

@@ -1,44 +1,33 @@
-# Migración: Soporte Multi-Mes y Actualización Continua
+# Soporte Multi-Mes y Actualización Continua
 
-## Cambios realizados
+## Resumen
 
-Se actualizó el sistema para que Convex extraiga y actualice datos **a la fecha actual**, manteniendo sincronizados:
+Convex extrae y actualiza datos **a la fecha actual**:
 
-- **Intradía**: Datos del día en curso (actualización cada 1-5 min según horario)
-- **Diarios**: Días completos del mes actual
-- **Mensuales**: Agregación automática en `monthlyData` al completar cada día
+- **Intradía:** Día en curso (1–5 min según horario México)
+- **Diarios:** Días completos del mes actual
+- **Mensuales:** Agregación en `monthlyData` al completar cada día
 
-## Cambios en el schema
+## Schema
 
-- `dailyData`: Se añadió el campo `month` (1-12). Índice `by_year_month_day`.
-- `hourlyDistribution`: Se añadió el campo `month`. Índice `by_year_month_type_hour`.
+- `dailyData`: campo `month` (1–12), índice `by_year_month_day`
+- `hourlyDistribution`: campo `month`, índice `by_year_month_type_hour`
 
-## Re-seed necesario
+## Flujo
 
-Tras desplegar estos cambios, **debes re-ejecutar el seed** porque el schema cambió:
-
-```bash
-# 1. Seed de datos diarios e intradía (Enero)
-npx convex run seedData:seedAllData
-
-# 2. Seed de datos mensuales (histórico anual 2024, 2025)
-node scripts/seedAnnualToConvex.js
-```
-
-## Flujo de actualización automática
-
-1. **Cron** (`convex/crons.ts`): Se ejecuta cada minuto.
+1. **Cron** (`convex/crons.ts`): cada 1 minuto
 2. **CloudWatch** (`convex/cloudwatch.ts`):
-   - Obtiene la fecha actual en México (UTC-6).
-   - Si cambió el mes/año, reinicia desde el día 1.
-   - Procesa días completos → `dailyData` + `hourlyDistribution` + `monthlyData`.
-   - Procesa el día actual (incompleto) → `intradayData` + `intradayMeta`.
-3. **Variables de entorno** requeridas: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `CLOUDWATCH_LOG_GROUP` (opcional).
+   - Fecha actual en México (UTC-6)
+   - Si cambia mes/año, reinicia desde día 1
+   - Días completos → `dailyData`, `hourlyDistribution`, `monthlyData`
+   - Día actual → `intradayData`, `intradayMeta`
 
-## Extracción manual
-
-Para forzar una extracción manual:
+## Extracción Manual
 
 ```bash
 npx convex run cloudwatch:manualFetch
 ```
+
+## Variables Requeridas
+
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `CLOUDWATCH_LOG_GROUP` (opcional)

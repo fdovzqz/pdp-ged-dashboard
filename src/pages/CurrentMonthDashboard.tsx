@@ -58,6 +58,7 @@ export const CurrentMonthDashboard = () => {
 
   // Queries con el mes actual
   const totals = useQuery(api.queries.getTotals, { month: currentMonth });
+  const historicalData = useQuery(api.queries.getHistoricalData, { month: currentMonth });
   const dailyAverages = useQuery(api.queries.getDailyAverages, { month: currentMonth });
   const growthMetrics = useQuery(api.queries.getGrowthMetrics, { month: currentMonth });
   const historicalMax = useQuery(api.queries.getHistoricalMax, { month: currentMonth });
@@ -78,6 +79,10 @@ export const CurrentMonthDashboard = () => {
         : '0.0';
 
     const currentDay = lastAvailableDay ?? 1;
+    const absoluteDelta = Math.round(totalWithIntraday - totals['2025']);
+    const sparklineData = historicalData
+      ? historicalData.slice(-7).map((d) => d['2026'])
+      : undefined;
 
     return {
       totalEvents: totalWithIntraday.toLocaleString(),
@@ -92,6 +97,8 @@ export const CurrentMonthDashboard = () => {
         intradayTotal > 0 ? `+${growthVs2025WithIntraday}%` : `+${growthMetrics.growth25vs26}%`,
       maxValue: historicalMax.value.toLocaleString(),
       maxDate: `${historicalMax.day} de ${monthName} ${historicalMax.year}`,
+      absoluteDelta,
+      sparklineData,
     };
   }, [
     totals,
@@ -101,6 +108,7 @@ export const CurrentMonthDashboard = () => {
     intradayTotal,
     lastAvailableDay,
     monthName,
+    historicalData,
   ]);
 
   if (!kpiData) {
@@ -115,7 +123,7 @@ export const CurrentMonthDashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in duration-500 min-w-0 max-w-full">
       {/* Context Header */}
       <div className="flex items-center gap-3 mb-6 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 backdrop-blur-sm">
         <Info className="text-cyan-400" size={24} />
@@ -133,6 +141,9 @@ export const CurrentMonthDashboard = () => {
           </p>
         </div>
       </div>
+
+      {/* Intradía - Prioridad (datos en tiempo real) */}
+      <IntradaySection monthName={monthName} />
 
       {/* KPI Cards */}
       <motion.div
@@ -158,6 +169,9 @@ export const CurrentMonthDashboard = () => {
           trend="up"
           trendValue={kpiData.growthVs2025}
           accent
+          absoluteDelta={kpiData.absoluteDelta}
+          sparklineData={kpiData.sparklineData}
+          tooltip="Tendencia de los últimos 7 días del mes"
         />
         <KPICard
           title="Crecimiento Bianual"
@@ -179,9 +193,7 @@ export const CurrentMonthDashboard = () => {
         />
       </motion.div>
 
-      <IntradaySection monthName={monthName} />
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="min-w-0">
         <HistoricalChart
           activeYears={activeYears}
           onToggleYear={toggleYear}
@@ -190,11 +202,15 @@ export const CurrentMonthDashboard = () => {
         />
       </div>
 
-      <AccumulatedSection month={currentMonth} monthName={monthName} />
+      <div className="min-w-0">
+        <AccumulatedSection month={currentMonth} monthName={monthName} />
+      </div>
 
-      <StatsSection month={currentMonth} />
+      <div className="min-w-0">
+        <StatsSection month={currentMonth} />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 min-w-0">
         <HourlyChart
           activeYears={activeYears}
           onToggleYear={toggleYear}
@@ -220,7 +236,9 @@ export const CurrentMonthDashboard = () => {
         monthName={monthName}
       />
 
-      <InsightsSection month={currentMonth} monthName={monthName} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
+        <InsightsSection month={currentMonth} monthName={monthName} />
+      </div>
 
       <DayDetailModal
         day={selectedDay}
