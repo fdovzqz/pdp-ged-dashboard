@@ -1,39 +1,84 @@
 import { motion } from 'framer-motion';
-import { BarChart3, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
-import { growth24vs26, historicalData, totals, fullMonthTotals, lastAvailableDay } from '../../data/historicalData';
+import { BarChart3, ChevronRight, Trophy } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
-export const InsightsSection = () => {
-  // Cálculo dinámico de primeros 7 días
+interface InsightsSectionProps {
+  month?: number;
+  monthName?: string;
+}
+
+export const InsightsSection = ({ month = 1, monthName = 'Enero' }: InsightsSectionProps) => {
+  const historicalData = useQuery(api.queries.getHistoricalData, { month });
+  const totals = useQuery(api.queries.getTotals, { month });
+  const growthMetrics = useQuery(api.queries.getGrowthMetrics, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
+
+  if (
+    !historicalData ||
+    !totals ||
+    !growthMetrics ||
+    lastAvailableDay === undefined
+  ) {
+    return null;
+  }
+
+  // Primeros 7 días
   const first7Days2026 = historicalData
-    .filter(d => d.day <= 7)
+    .filter((d) => d.day <= 7)
     .reduce((acc, curr) => acc + curr['2026'], 0);
-    
   const first7Days2025 = historicalData
-    .filter(d => d.day <= 7)
+    .filter((d) => d.day <= 7)
     .reduce((acc, curr) => acc + curr['2025'], 0);
-    
-  const growthFirst7Days = Math.round(((first7Days2026 - first7Days2025) / first7Days2025) * 100);
+  const growthFirst7Days =
+    first7Days2025 > 0
+      ? Math.round(((first7Days2026 - first7Days2025) / first7Days2025) * 100)
+      : 0;
 
-  // Calcular días donde 2026 superó a 2025
-  const daysWhere2026Beats2025 = historicalData.filter(d => d['2026'] > d['2025']).length;
-  
-  // Promedio diario
-  const avgDaily2026 = Math.round(totals['2026'] / lastAvailableDay);
-  const avgDaily2025 = Math.round(totals['2025'] / lastAvailableDay);
-  const avgGrowth = Math.round(((avgDaily2026 - avgDaily2025) / avgDaily2025) * 100);
+  // Días donde 2026 superó a 2025
+  const daysWhere2026Beats2025 = historicalData.filter(
+    (d) => d['2026'] > d['2025']
+  ).length;
 
-  // Totales generales (enero completo para 2024/2025, parcial para 2026)
-  const totalAllYears = fullMonthTotals['2024'] + fullMonthTotals['2025'] + totals['2026'];
-  const growthFormatted = `+${growth24vs26}%`;
+  // Promedio diario (mes completo)
+  const avgDaily2026 =
+    lastAvailableDay > 0 ? Math.round(totals['2026'] / lastAvailableDay) : 0;
+  const avgDaily2025 =
+    lastAvailableDay > 0 ? Math.round(totals['2025'] / lastAvailableDay) : 0;
+  const avgGrowth =
+    avgDaily2025 > 0
+      ? Math.round(((avgDaily2026 - avgDaily2025) / avgDaily2025) * 100)
+      : 0;
+
+  // Últimos 5 días (27-31)
+  const last5Days = historicalData.filter((d) => d.day >= 27);
+  const last5Days2026 = last5Days.reduce((acc, d) => acc + d['2026'], 0);
+  const last5Days2025 = last5Days.reduce((acc, d) => acc + d['2025'], 0);
+  const growthLast5Vs2025 =
+    last5Days2025 > 0
+      ? Math.round(((last5Days2026 - last5Days2025) / last5Days2025) * 100)
+      : 0;
+
+  // Pico del día 31
+  const day31Data = historicalData.find((d) => d.day === 31);
+  const day31Max = day31Data
+    ? Math.max(day31Data['2024'], day31Data['2025'], day31Data['2026'])
+    : 0;
+
+  const growthFormatted = `+${growthMetrics.growth24vs26}%`;
+  const totalAllYears = totals['2024'] + totals['2025'] + totals['2026'];
 
   const insights = [
     {
       title: 'Arranque Acelerado',
       description: (
         <>
-          Los primeros 7 días de enero 2026 registraron{' '}
-          <span className="text-emerald-400 font-semibold">{first7Days2026.toLocaleString()} pagos</span>,
-          un crecimiento del {growthFirst7Days}% respecto al mismo período de 2025, indicando mayor adopción del portal.
+          Los primeros 7 días de {monthName.toLowerCase()} 2026 registraron{' '}
+          <span className="text-emerald-400 font-semibold">
+            {first7Days2026.toLocaleString()} pagos
+          </span>
+          , un crecimiento del {growthFirst7Days}% respecto al mismo período de
+          2025, indicando mayor adopción del portal.
         </>
       ),
       color: 'emerald',
@@ -44,9 +89,12 @@ export const InsightsSection = () => {
       title: 'Promedio Diario Superior',
       description: (
         <>
-          El promedio diario de 2026 es de{' '}
-          <span className="text-violet-400 font-semibold">{avgDaily2026.toLocaleString()} pagos/día</span>,
-          un {avgGrowth}% más que 2025. En {daysWhere2026Beats2025} de {lastAvailableDay} días, 2026 superó al año anterior.
+          El promedio diario de 2026 fue de{' '}
+          <span className="text-violet-400 font-semibold">
+            {avgDaily2026.toLocaleString()} pagos/día
+          </span>
+          , un {avgGrowth}% más que 2025. En {daysWhere2026Beats2025} de{' '}
+          {lastAvailableDay} días, 2026 superó al año anterior.
         </>
       ),
       color: 'violet',
@@ -59,7 +107,8 @@ export const InsightsSection = () => {
         <>
           El crecimiento del{' '}
           <span className="text-cyan-400 font-semibold">{growthFormatted}</span>{' '}
-          en dos años refleja una adopción orgánica y consistente del portal por los ciudadanos.
+          en dos años refleja una adopción orgánica y consistente del portal por
+          los ciudadanos.
         </>
       ),
       color: 'cyan',
@@ -109,25 +158,40 @@ export const InsightsSection = () => {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="flex flex-col gap-6"
       >
-        <div className="bg-linear-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 rounded-3xl p-6">
+        <div className="bg-linear-to-br from-emerald-500/20 to-cyan-500/10 border border-emerald-500/30 rounded-3xl p-6">
           <div className="flex items-start gap-4">
-            <div className="bg-amber-500/30 p-3 rounded-xl">
-              <AlertTriangle size={24} className="text-amber-400" />
+            <div className="bg-emerald-500/30 p-3 rounded-xl">
+              <Trophy size={24} className="text-emerald-400" />
             </div>
             <div>
               <h4 className="font-bold text-white mb-2">
-                Preparación Cierre de Mes
+                Resumen Cierre de Mes
               </h4>
               <p className="text-sm text-slate-200 leading-relaxed mb-4">
-                Basado en patrones históricos, se espera un incremento significativo
-                de actividad entre los días 27-31. El sistema podría procesar hasta{' '}
-                <span className="text-amber-400 font-bold">6,500+ pagos</span>{' '}
-                en el pico del día 31 (récord 2024: 6,290).
+                Los últimos 5 días (27-31) registraron{' '}
+                <span className="text-emerald-400 font-bold">
+                  {last5Days2026.toLocaleString()} pagos
+                </span>{' '}
+                en 2026, un{' '}
+                <span
+                  className={
+                    growthLast5Vs2025 >= 0
+                      ? 'text-emerald-400 font-semibold'
+                      : 'text-red-400 font-semibold'
+                  }
+                >
+                  {growthLast5Vs2025 >= 0 ? '+' : ''}
+                  {growthLast5Vs2025}%
+                </span>{' '}
+                vs 2025 ({last5Days2025.toLocaleString()}). El pico del día 31
+                alcanzó{' '}
+                <span className="text-amber-400 font-bold">
+                  {day31Max.toLocaleString()} pagos
+                </span>{' '}
+                (2024: {day31Data?.['2024']?.toLocaleString() ?? '—'}, 2025:{' '}
+                {day31Data?.['2025']?.toLocaleString() ?? '—'}, 2026:{' '}
+                {day31Data?.['2026']?.toLocaleString() ?? '—'}).
               </p>
-              <div className="flex items-center gap-2 text-xs text-amber-300">
-                <Clock size={14} />
-                <span>Monitoreo recomendado a partir del día 27</span>
-              </div>
             </div>
           </div>
         </div>

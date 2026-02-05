@@ -7,6 +7,9 @@ import type { YearType } from '../../types';
 
 interface HeatmapChartProps {
   year?: YearType;
+  month?: number;
+  monthName?: string;
+  onDaySelect?: (day: number) => void;
 }
 
 interface HoveredCell {
@@ -17,19 +20,19 @@ interface HoveredCell {
   placement: 'top' | 'bottom' | 'left' | 'right';
 }
 
-// Día de inicio de cada año (0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb)
-const startDayOfWeek: Record<YearType, number> = {
-  '2024': 1, // Enero 2024 empieza en Lunes
-  '2025': 3, // Enero 2025 empieza en Miércoles
-  '2026': 4, // Enero 2026 empieza en Jueves
-};
+/** Día de la semana del 1º del mes (0=Dom, 1=Lun, ..., 6=Sáb) */
+const getStartDayOfMonth = (year: number, month: number): number =>
+  new Date(year, month - 1, 1).getDay();
 
-export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: HeatmapChartProps) {
+export const HeatmapChart = memo(function HeatmapChart({ year = '2026', month = 1, monthName = 'Enero', onDaySelect }: HeatmapChartProps) {
   const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
   
   // Obtener datos del heatmap desde Convex
-  const heatmapData = useQuery(api.queries.getHeatmapData, { year: parseInt(year) });
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  const heatmapData = useQuery(api.queries.getHeatmapData, {
+    year: parseInt(year),
+    month,
+  });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
   // Calcular max value del heatmap
   const maxValue = useMemo(() => {
@@ -43,7 +46,7 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
   const calendarGrid = useMemo(() => {
     if (lastAvailableDay === undefined) return [];
     
-    const startDay = startDayOfWeek[year];
+    const startDay = getStartDayOfMonth(parseInt(year), month);
     const weeks: (number | null)[][] = [];
     let currentWeek: (number | null)[] = [];
     
@@ -72,7 +75,7 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
     }
     
     return weeks;
-  }, [year, lastAvailableDay]);
+  }, [year, month, lastAvailableDay]);
   
   const getIntensityColor = (value: number): string => {
     const intensity = value / maxValue;
@@ -170,10 +173,15 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
       transition={{ duration: 0.6, delay: 0.4 }}
       className="bg-slate-800/40 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-6 overflow-visible"
     >
-      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-display">
-        <Calendar size={18} className="text-orange-400" />
-        Mapa de Calor - Enero {year}
-      </h3>
+      <div className="mb-4">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2 font-display">
+          <Calendar size={18} className="text-orange-400" />
+          Mapa de Calor - {monthName} {year}
+        </h3>
+        {onDaySelect && (
+          <p className="text-xs text-slate-400 mt-1">Clic en una celda para ver detalle e intradía</p>
+        )}
+      </div>
       
       <div className="heatmap-container relative overflow-visible">
         {/* Tooltip */}
@@ -223,15 +231,20 @@ export const HeatmapChart = memo(function HeatmapChart({ year = '2026' }: Heatma
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: (weekIndex * 7 + dayIndex) * 0.02 }}
+                    role={day && onDaySelect ? 'button' : undefined}
+                    tabIndex={day && onDaySelect ? 0 : undefined}
+                    onKeyDown={(e) => day && onDaySelect && e.key === 'Enter' && onDaySelect(day)}
                     className={`
                       aspect-square rounded-md flex items-center justify-center
-                      text-xs font-medium cursor-pointer
-                      transition-all duration-200 hover:scale-110 hover:z-10 hover:ring-2 hover:ring-orange-400
+                      text-xs font-medium
+                      transition-all duration-200
+                      ${day && onDaySelect ? 'cursor-pointer hover:scale-110 hover:z-10 hover:ring-2 hover:ring-orange-400' : ''}
                       ${day ? getIntensityColor(value) : 'bg-slate-700/20'}
                       ${day ? getTextColor(value) : 'text-transparent'}
                     `}
                     onMouseEnter={(e) => day && handleMouseEnter(day, value, e)}
                     onMouseLeave={() => setHoveredCell(null)}
+                    onClick={() => day && onDaySelect?.(day)}
                   >
                     {day || ''}
                   </motion.div>

@@ -10,7 +10,7 @@ export const AnnualDashboard = () => {
         <div>
           <h2 className="text-lg font-bold text-white">Análisis Estratégico Anual</h2>
           <p className="text-sm text-slate-400">
-            Comparativa de crecimiento mensual y tendencias macro: 2024 vs 2025.
+            Comparativa de crecimiento mensual y tendencias macro: 2024 vs 2025 vs 2026 (Enero).
           </p>
         </div>
       </div>

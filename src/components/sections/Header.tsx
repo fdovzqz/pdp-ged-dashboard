@@ -1,6 +1,15 @@
 import { motion } from 'framer-motion';
 import { Building2, Activity, Calendar, Clock, Zap, Download, Maximize2 } from 'lucide-react';
-import { lastAvailableDay, formatDayMonth } from '../../data/historicalData';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+
+const MONTH_NAMES: Record<number, string> = {
+  1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+  7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+};
+
+const formatDayMonth = (day: number, month: string = 'Enero'): string =>
+  `${day} de ${month}`;
 
 interface HeaderProps {
   onExport?: () => void;
@@ -9,6 +18,11 @@ interface HeaderProps {
 }
 
 export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderProps) => {
+  const processingContext = useQuery(api.queries.getProcessingContext);
+  const year = processingContext?.year ?? new Date().getFullYear();
+  const month = processingContext?.month ?? 1;
+  const lastAvailableDay = processingContext?.lastCompleteDay ?? 31;
+  const monthName = MONTH_NAMES[month] ?? 'Enero';
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -50,7 +64,7 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
             <Calendar size={18} className="text-emerald-500" />
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">Período</p>
-              <p className="font-semibold text-white">Enero 2024 - 2026</p>
+              <p className="font-semibold text-white">{monthName} 2024 - {year}</p>
             </div>
           </div>
           
@@ -59,7 +73,9 @@ export const Header = ({ onExport, onFullscreen, isExporting = false }: HeaderPr
             <Clock size={18} className="text-amber-500" />
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">Corte</p>
-              <p className="font-semibold text-white">{formatDayMonth(lastAvailableDay)}, 2026</p>
+              <p className="font-semibold text-white">
+                {formatDayMonth(lastAvailableDay, monthName)}, {year}
+              </p>
             </div>
           </div>
 

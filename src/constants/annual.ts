@@ -6,4 +6,5 @@
 export const ANNUAL_YEAR_COLORS = {
   "2024": "#f472b6", // Rosa
   "2025": "#8b5cf6", // Violeta
+  "2026": "#10b981", // Esmeralda
 } as const;

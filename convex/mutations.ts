@@ -1,4 +1,5 @@
 import { mutation, internalMutation } from "./_generated/server";
+import type { Id, TableNames } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 // ============ DAILY DATA ============
@@ -7,6 +8,7 @@ import { v } from "convex/values";
 export const upsertDailyData = mutation({
   args: {
     year: v.number(),
+    month: v.number(),
     day: v.number(),
     events: v.number(),
     isComplete: v.boolean(),
@@ -14,7 +16,9 @@ export const upsertDailyData = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("dailyData")
-      .withIndex("by_year_day", (q) => q.eq("year", args.year).eq("day", args.day))
+      .withIndex("by_year_month_day", (q) =>
+        q.eq("year", args.year).eq("month", args.month).eq("day", args.day)
+      )
       .unique();
 
     if (existing) {
@@ -33,6 +37,7 @@ export const upsertDailyData = mutation({
 export const internalUpsertDailyData = internalMutation({
   args: {
     year: v.number(),
+    month: v.number(),
     day: v.number(),
     events: v.number(),
     isComplete: v.boolean(),
@@ -40,7 +45,9 @@ export const internalUpsertDailyData = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("dailyData")
-      .withIndex("by_year_day", (q) => q.eq("year", args.year).eq("day", args.day))
+      .withIndex("by_year_month_day", (q) =>
+        q.eq("year", args.year).eq("month", args.month).eq("day", args.day)
+      )
       .unique();
 
     if (existing) {
@@ -49,9 +56,31 @@ export const internalUpsertDailyData = internalMutation({
         isComplete: args.isComplete,
       });
       return existing._id;
-    } else {
-      return await ctx.db.insert("dailyData", args);
     }
+
+    // Compatibilidad con documentos legacy (sin month): cuando month=1, buscar por year+day
+    if (args.month === 1) {
+      const legacy = await ctx.db
+        .query("dailyData")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("year"), args.year),
+            q.eq(q.field("day"), args.day),
+            q.or(q.eq(q.field("month"), 1), q.eq(q.field("month"), undefined))
+          )
+        )
+        .first();
+      if (legacy) {
+        await ctx.db.patch(legacy._id, {
+          month: 1,
+          events: args.events,
+          isComplete: args.isComplete,
+        });
+        return legacy._id;
+      }
+    }
+
+    return await ctx.db.insert("dailyData", args);
   },
 });
 
@@ -61,6 +90,7 @@ export const batchInsertDailyData = mutation({
     data: v.array(
       v.object({
         year: v.number(),
+        month: v.number(),
         day: v.number(),
         events: v.number(),
         isComplete: v.boolean(),
@@ -72,7 +102,9 @@ export const batchInsertDailyData = mutation({
     for (const item of args.data) {
       const existing = await ctx.db
         .query("dailyData")
-        .withIndex("by_year_day", (q) => q.eq("year", item.year).eq("day", item.day))
+        .withIndex("by_year_month_day", (q) =>
+          q.eq("year", item.year).eq("month", item.month).eq("day", item.day)
+        )
         .unique();
 
       if (existing) {
@@ -96,6 +128,7 @@ export const batchInsertDailyData = mutation({
 export const upsertHourlyDistribution = mutation({
   args: {
     year: v.number(),
+    month: v.number(),
     dayType: v.string(),
     hour: v.number(),
     events: v.number(),
@@ -103,8 +136,12 @@ export const upsertHourlyDistribution = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("hourlyDistribution")
-      .withIndex("by_year_type_hour", (q) =>
-        q.eq("year", args.year).eq("dayType", args.dayType).eq("hour", args.hour)
+      .withIndex("by_year_month_type_hour", (q) =>
+        q
+          .eq("year", args.year)
+          .eq("month", args.month)
+          .eq("dayType", args.dayType)
+          .eq("hour", args.hour)
       )
       .unique();
 
@@ -121,6 +158,7 @@ export const upsertHourlyDistribution = mutation({
 export const internalUpsertHourlyDistribution = internalMutation({
   args: {
     year: v.number(),
+    month: v.number(),
     dayType: v.string(),
     hour: v.number(),
     events: v.number(),
@@ -128,8 +166,12 @@ export const internalUpsertHourlyDistribution = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("hourlyDistribution")
-      .withIndex("by_year_type_hour", (q) =>
-        q.eq("year", args.year).eq("dayType", args.dayType).eq("hour", args.hour)
+      .withIndex("by_year_month_type_hour", (q) =>
+        q
+          .eq("year", args.year)
+          .eq("month", args.month)
+          .eq("dayType", args.dayType)
+          .eq("hour", args.hour)
       )
       .unique();
 
@@ -146,6 +188,7 @@ export const internalUpsertHourlyDistribution = internalMutation({
 export const incrementHourlyDistribution = internalMutation({
   args: {
     year: v.number(),
+    month: v.number(),
     dayType: v.string(),
     hour: v.number(),
     additionalEvents: v.number(),
@@ -153,8 +196,12 @@ export const incrementHourlyDistribution = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("hourlyDistribution")
-      .withIndex("by_year_type_hour", (q) =>
-        q.eq("year", args.year).eq("dayType", args.dayType).eq("hour", args.hour)
+      .withIndex("by_year_month_type_hour", (q) =>
+        q
+          .eq("year", args.year)
+          .eq("month", args.month)
+          .eq("dayType", args.dayType)
+          .eq("hour", args.hour)
       )
       .unique();
 
@@ -163,14 +210,37 @@ export const incrementHourlyDistribution = internalMutation({
         events: existing.events + args.additionalEvents,
       });
       return existing._id;
-    } else {
-      return await ctx.db.insert("hourlyDistribution", {
-        year: args.year,
-        dayType: args.dayType,
-        hour: args.hour,
-        events: args.additionalEvents,
-      });
     }
+
+    // Compatibilidad con documentos legacy (sin month): cuando month=1, buscar por year+dayType+hour
+    if (args.month === 1) {
+      const legacy = await ctx.db
+        .query("hourlyDistribution")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("year"), args.year),
+            q.eq(q.field("dayType"), args.dayType),
+            q.eq(q.field("hour"), args.hour),
+            q.or(q.eq(q.field("month"), 1), q.eq(q.field("month"), undefined))
+          )
+        )
+        .first();
+      if (legacy) {
+        await ctx.db.patch(legacy._id, {
+          month: 1,
+          events: legacy.events + args.additionalEvents,
+        });
+        return legacy._id;
+      }
+    }
+
+    return await ctx.db.insert("hourlyDistribution", {
+      year: args.year,
+      month: args.month,
+      dayType: args.dayType,
+      hour: args.hour,
+      events: args.additionalEvents,
+    });
   },
 });
 
@@ -180,6 +250,7 @@ export const batchInsertHourlyDistribution = mutation({
     data: v.array(
       v.object({
         year: v.number(),
+        month: v.number(),
         dayType: v.string(),
         hour: v.number(),
         events: v.number(),
@@ -191,8 +262,12 @@ export const batchInsertHourlyDistribution = mutation({
     for (const item of args.data) {
       const existing = await ctx.db
         .query("hourlyDistribution")
-        .withIndex("by_year_type_hour", (q) =>
-          q.eq("year", item.year).eq("dayType", item.dayType).eq("hour", item.hour)
+        .withIndex("by_year_month_type_hour", (q) =>
+          q
+            .eq("year", item.year)
+            .eq("month", item.month)
+            .eq("dayType", item.dayType)
+            .eq("hour", item.hour)
         )
         .unique();
 
@@ -205,6 +280,97 @@ export const batchInsertHourlyDistribution = mutation({
       }
     }
     return ids;
+  },
+});
+
+// ============ RAW HOURLY DATA (fuente única desde CloudWatch) ============
+
+// Batch upsert para rawHourlyData (usado por fullReextractFromCloudWatch)
+export const batchInsertRawHourlyData = internalMutation({
+  args: {
+    data: v.array(
+      v.object({
+        year: v.number(),
+        month: v.number(),
+        day: v.number(),
+        hour: v.number(),
+        events: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const ids = [];
+    for (const item of args.data) {
+      const existing = await ctx.db
+        .query("rawHourlyData")
+        .withIndex("by_year_month_day_hour", (q) =>
+          q
+            .eq("year", item.year)
+            .eq("month", item.month)
+            .eq("day", item.day)
+            .eq("hour", item.hour)
+        )
+        .unique();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, { events: item.events });
+        ids.push(existing._id);
+      } else {
+        const id = await ctx.db.insert("rawHourlyData", item);
+        ids.push(id);
+      }
+    }
+    return ids;
+  },
+});
+
+// ============ CLEAR AGGREGATES (para rebuild) ============
+// Para vaciar TODAS las tablas, usa: npm run convex:clear
+// (convex import --replace es el método recomendado por Convex)
+
+const BATCH_DELETE_SIZE = 500;
+
+// Vaciar solo tablas agregadas (para rebuild desde rawHourlyData)
+// Usa borrado por lotes para evitar el límite de 4096 lecturas
+export const clearAggregatesOnly = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const table of ["dailyData", "monthlyData", "hourlyDistribution"] as const) {
+      let batch: { _id: Id<TableNames> }[];
+      do {
+        batch = await ctx.db.query(table).take(BATCH_DELETE_SIZE) as { _id: Id<TableNames> }[];
+        for (const doc of batch) await ctx.db.delete(doc._id);
+      } while (batch.length === BATCH_DELETE_SIZE);
+    }
+  },
+});
+
+// Batch insert monthlyData (para rebuildAggregatesFromRaw)
+export const batchInsertMonthlyData = internalMutation({
+  args: {
+    data: v.array(
+      v.object({
+        year: v.number(),
+        month: v.number(),
+        events: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    for (const item of args.data) {
+      const existing = await ctx.db
+        .query("monthlyData")
+        .withIndex("by_year_month", (q) =>
+          q.eq("year", item.year).eq("month", item.month)
+        )
+        .unique();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, { events: item.events });
+      } else {
+        await ctx.db.insert("monthlyData", item);
+      }
+    }
   },
 });
 
@@ -270,6 +436,67 @@ export const updateIntradayMeta = internalMutation({
   },
 });
 
+// ============ SYSTEM FLAGS ============
+
+// Pausar o reactivar el cron (para clear + re-extracción)
+export const setCronPaused = mutation({
+  args: { paused: v.boolean() },
+  handler: async (ctx, args) => {
+    const value = args.paused ? 1 : 0;
+    const existing = await ctx.db
+      .query("systemFlags")
+      .withIndex("by_key", (q) => q.eq("key", "cronPaused"))
+      .unique();
+    const now = new Date().toISOString();
+    if (existing) {
+      await ctx.db.patch(existing._id, { value, updatedAt: now });
+    } else {
+      await ctx.db.insert("systemFlags", {
+        key: "cronPaused",
+        value,
+        updatedAt: now,
+      });
+    }
+    return { paused: args.paused };
+  },
+});
+
+// Solicitar cancelación de la re-extracción en curso (el job saldrá en la siguiente iteración)
+export const cancelReextract = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = new Date().toISOString();
+    const existing = await ctx.db
+      .query("systemFlags")
+      .withIndex("by_key", (q) => q.eq("key", "reextractCanceled"))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { value: 1, updatedAt: now });
+    } else {
+      await ctx.db.insert("systemFlags", {
+        key: "reextractCanceled",
+        value: 1,
+        updatedAt: now,
+      });
+    }
+    return { canceled: true };
+  },
+});
+
+// Limpiar flag de cancelación (para iniciar nueva re-extracción)
+export const clearReextractCanceled = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db
+      .query("systemFlags")
+      .withIndex("by_key", (q) => q.eq("key", "reextractCanceled"))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { value: 0, updatedAt: new Date().toISOString() });
+    }
+  },
+});
+
 // ============ PROCESSING CONTROL ============
 
 // Actualizar control de procesamiento
@@ -326,6 +553,38 @@ export const initProcessingControl = mutation({
       return existing._id;
     } else {
       return await ctx.db.insert("processingControl", args);
+    }
+  },
+});
+
+// ============ MONTHLY DATA (agregación desde dailyData) ============
+
+// Incrementar o crear registro mensual cuando se completa un día
+export const internalIncrementMonthlyData = internalMutation({
+  args: {
+    year: v.number(),
+    month: v.number(),
+    additionalEvents: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("monthlyData")
+      .withIndex("by_year_month", (q) =>
+        q.eq("year", args.year).eq("month", args.month)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        events: existing.events + args.additionalEvents,
+      });
+      return existing._id;
+    } else {
+      return await ctx.db.insert("monthlyData", {
+        year: args.year,
+        month: args.month,
+        events: args.additionalEvents,
+      });
     }
   },
 });

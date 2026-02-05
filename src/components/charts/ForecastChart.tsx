@@ -24,16 +24,18 @@ interface ForecastChartProps {
   onToggleForecast: (type: ForecastType) => void;
   activeYears: YearType[];
   onToggleYear: (year: YearType) => void;
+  month?: number;
+  monthName?: string;
 }
 
-export const ForecastChart = memo(function ForecastChart({ activeForecast, onToggleForecast, activeYears, onToggleYear }: ForecastChartProps) {
+export const ForecastChart = memo(function ForecastChart({ activeForecast, onToggleForecast, activeYears, onToggleYear, month = 1, monthName = 'Enero' }: ForecastChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
   
   // Obtener datos de forecast desde Convex
-  const forecastData = useQuery(api.queries.getForecastData);
-  const forecastTotals = useQuery(api.queries.getForecastTotals);
-  const fullMonthTotals = useQuery(api.queries.getFullMonthTotals);
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  const forecastData = useQuery(api.queries.getForecastData, { month });
+  const forecastTotals = useQuery(api.queries.getForecastTotals, { month });
+  const fullMonthTotals = useQuery(api.queries.getFullMonthTotals, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
   // Calculate accumulated data
   const accumulatedData = useMemo(() => {
@@ -292,7 +294,7 @@ export const ForecastChart = memo(function ForecastChart({ activeForecast, onTog
       <div className="mt-6 mb-4">
         <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <TrendingUp size={14} />
-          Comparación con Enero Completo (días 1-31)
+          Comparación con {monthName} Completo (días 1-31)
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {/* 2024 Total */}

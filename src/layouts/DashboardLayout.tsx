@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, CalendarRange } from 'lucide-react';
+import { LayoutDashboard, CalendarRange, CalendarDays } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Header, Footer } from '../components/sections';
@@ -105,6 +105,10 @@ export const DashboardLayout = () => {
           <NavLink to="/" className={navLinkClass} end>
             <LayoutDashboard size={18} />
             Análisis Enero
+          </NavLink>
+          <NavLink to="/current-month" className={navLinkClass}>
+            <CalendarDays size={18} />
+            Mes Actual
           </NavLink>
           <NavLink to="/annual" className={navLinkClass}>
             <CalendarRange size={18} />

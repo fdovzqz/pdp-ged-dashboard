@@ -1,11 +1,15 @@
-// Script para procesar los CSV y generar los datos para el dashboard
+// Script para procesar los CSV y actualizar Convex (dailyData, hourlyDistribution)
 // NOTA: Los timestamps en CSV están en UTC, hay que restar 6 horas para México (UTC-6)
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const prod = process.argv.includes('--prod');
+const prodFlag = prod ? ' --prod' : '';
 
 function parseCSV(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
@@ -15,9 +19,12 @@ function parseCSV(filePath) {
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    const [timestamp, events] = line.split(',');
-    const eventCount = parseInt(events, 10);
-    
+    const commaIdx = line.lastIndexOf(',');
+    if (commaIdx === -1) continue;
+    const timestamp = line.slice(0, commaIdx).replace(/^"|"$/g, '').trim();
+    const eventCount = parseInt(line.slice(commaIdx + 1).trim(), 10);
+    if (Number.isNaN(eventCount)) continue;
+
     // Parse UTC timestamp and convert to Mexico time (UTC-6)
     const utcDate = new Date(timestamp.replace(' ', 'T') + 'Z'); // Parse as UTC
     const mexicoDate = new Date(utcDate.getTime() - (6 * 60 * 60 * 1000)); // Subtract 6 hours
@@ -67,18 +74,21 @@ console.log(`\n========================================`);
 console.log(`Procesando datos hasta el día ${lastDay2026} (solo días completos)`);
 console.log(`========================================`);
 
-// Generate combined array dynamically
-const historicalDataArray = [];
-for (let day = 1; day <= lastDay2026; day++) {
-  const date2024 = `2024-01-${day.toString().padStart(2, '0')}`;
-  const date2025 = `2025-01-${day.toString().padStart(2, '0')}`;
-  const date2026 = `2026-01-${day.toString().padStart(2, '0')}`;
-  
-  const val2024 = data2024[date2024] || 0;
-  const val2025 = data2025[date2025] || 0;
-  const val2026 = data2026[date2026] || 0;
-  
-  historicalDataArray.push(`  { day: ${day}, '2024': ${val2024}, '2025': ${val2025}, '2026': ${val2026} },`);
+// Build dailyData for Convex (2024, 2025: full month 1-31; 2026: 1 to lastDay2026)
+const dailyDataForConvex = [];
+for (const year of [2024, 2025, 2026]) {
+  const maxDay = year === 2026 ? lastDay2026 : 31;
+  for (let day = 1; day <= maxDay; day++) {
+    const dateKey = `${year}-01-${day.toString().padStart(2, '0')}`;
+    const events = (year === 2024 ? data2024 : year === 2025 ? data2025 : data2026)[dateKey] || 0;
+    dailyDataForConvex.push({
+      year,
+      month: 1,
+      day,
+      events,
+      isComplete: true,
+    });
+  }
 }
 
 // Calculate totals dynamically
@@ -123,9 +133,12 @@ function parseCSVForHourly(filePath, yearFilter, weekendDaysForYear) {
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    const [timestamp, events] = line.split(',');
-    const eventCount = parseInt(events, 10);
-    
+    const commaIdx = line.lastIndexOf(',');
+    if (commaIdx === -1) continue;
+    const timestamp = line.slice(0, commaIdx).replace(/^"|"$/g, '').trim();
+    const eventCount = parseInt(line.slice(commaIdx + 1).trim(), 10);
+    if (Number.isNaN(eventCount)) continue;
+
     // Parse UTC timestamp and convert to Mexico time (UTC-6)
     const utcDate = new Date(timestamp.replace(' ', 'T') + 'Z');
     const mexicoDate = new Date(utcDate.getTime() - (6 * 60 * 60 * 1000));
@@ -183,62 +196,67 @@ for (let h = 0; h < 24; h++) {
 console.log(`\nDistribución horaria procesada: 24 horas`);
 console.log(`  - Días de semana (L-V)`);
 console.log(`  - Fines de semana (S-D)`);
-console.log(`  - Total (para compatibilidad)`);
 
-// ========== ACTUALIZAR ARCHIVO historicalData.ts ==========
-const historicalDataPath = path.join(__dirname, '../src/data/historicalData.ts');
-let historicalDataContent = fs.readFileSync(historicalDataPath, 'utf8');
-
-// 1. Reemplazar array historicalData
-const historicalDataPattern = /(export const historicalData: DailyData\[\] = \[)([\s\S]*?)(\];)/;
-const newHistoricalData = `export const historicalData: DailyData[] = [\n${historicalDataArray.join('\n')}\n];`;
-historicalDataContent = historicalDataContent.replace(historicalDataPattern, newHistoricalData);
-
-// 2. Reemplazar valor totals['2026']
-const totalsPattern = /(export const totals = \{[\s\S]*?'2026':\s*)(\d+)([\s\S]*?\};)/;
-historicalDataContent = historicalDataContent.replace(totalsPattern, `$1${total2026}$3`);
-
-// 3. Reemplazar array hourlyDistribution (total)
-const hourlyPattern = /(export const hourlyDistribution: HourlyData\[\] = \[)([\s\S]*?)(\];)/;
-const newHourlyDistribution = `export const hourlyDistribution: HourlyData[] = [\n${hourlyDistributionArray.join('\n')}\n];`;
-historicalDataContent = historicalDataContent.replace(hourlyPattern, newHourlyDistribution);
-
-// 4. Agregar o actualizar hourlyDistributionWeekday (después de hourlyDistribution)
-const weekdayPattern = /(export const hourlyDistributionWeekday: HourlyData\[\] = \[)([\s\S]*?)(\];)/;
-const newHourlyWeekday = `export const hourlyDistributionWeekday: HourlyData[] = [\n${hourlyDistributionWeekdayArray.join('\n')}\n];`;
-if (historicalDataContent.match(weekdayPattern)) {
-  historicalDataContent = historicalDataContent.replace(weekdayPattern, newHourlyWeekday);
-} else {
-  // Insertar después de hourlyDistribution si no existe
-  const insertPosition = historicalDataContent.indexOf('export const hourlyDistribution: HourlyData[]');
-  const endPosition = historicalDataContent.indexOf('];', insertPosition) + 2;
-  historicalDataContent = 
-    historicalDataContent.slice(0, endPosition) + 
-    `\n\n// Distribución horaria para días de semana (L-V) - Actualizados desde CSV (UTC-6 México, días 1-${lastDay2026})\n${newHourlyWeekday}` +
-    historicalDataContent.slice(endPosition);
+// Build hourlyDistribution for Convex
+const hourlyDistributionForConvex = [];
+for (const year of [2024, 2025, 2026]) {
+  const hourly = year === 2024 ? hourly2024 : year === 2025 ? hourly2025 : hourly2026;
+  for (let h = 0; h < 24; h++) {
+    hourlyDistributionForConvex.push({
+      year,
+      month: 1,
+      dayType: 'weekday',
+      hour: h,
+      events: hourly.weekday[h] || 0,
+    });
+    hourlyDistributionForConvex.push({
+      year,
+      month: 1,
+      dayType: 'weekend',
+      hour: h,
+      events: hourly.weekend[h] || 0,
+    });
+  }
 }
 
-// 5. Agregar o actualizar hourlyDistributionWeekend
-const weekendPattern = /(export const hourlyDistributionWeekend: HourlyData\[\] = \[)([\s\S]*?)(\];)/;
-const newHourlyWeekend = `export const hourlyDistributionWeekend: HourlyData[] = [\n${hourlyDistributionWeekendArray.join('\n')}\n];`;
-if (historicalDataContent.match(weekendPattern)) {
-  historicalDataContent = historicalDataContent.replace(weekendPattern, newHourlyWeekend);
-} else {
-  // Insertar después de hourlyDistributionWeekday si no existe
-  const insertPosition = historicalDataContent.indexOf('export const hourlyDistributionWeekday: HourlyData[]');
-  const endPosition = historicalDataContent.indexOf('];', insertPosition) + 2;
-  historicalDataContent = 
-    historicalDataContent.slice(0, endPosition) + 
-    `\n\n// Distribución horaria para fines de semana (S-D) - Actualizados desde CSV (UTC-6 México, días 1-${lastDay2026})\n${newHourlyWeekend}` +
-    historicalDataContent.slice(endPosition);
+// ========== ACTUALIZAR CONVEX ==========
+const projectRoot = path.join(__dirname, '..');
+
+function runConvexMutation(name, args) {
+  const argsJson = JSON.stringify(args).replace(/'/g, "'\\''");
+  execSync(`npx convex run ${name}${prodFlag} '${argsJson}'`, {
+    stdio: 'inherit',
+    cwd: projectRoot,
+  });
 }
 
-// Escribir archivo actualizado
-fs.writeFileSync(historicalDataPath, historicalDataContent, 'utf8');
+// Insertar dailyData en lotes de 200
+const DAILY_BATCH = 200;
+for (let i = 0; i < dailyDataForConvex.length; i += DAILY_BATCH) {
+  const batch = dailyDataForConvex.slice(i, i + DAILY_BATCH);
+  runConvexMutation('mutations:batchInsertDailyData', { data: batch });
+  console.log(`✅ dailyData: lote ${Math.floor(i / DAILY_BATCH) + 1} (${batch.length} registros)`);
+}
 
-console.log(`\n✅ Archivo actualizado: src/data/historicalData.ts`);
+// Insertar hourlyDistribution en lotes de 100
+const HOURLY_BATCH = 100;
+for (let i = 0; i < hourlyDistributionForConvex.length; i += HOURLY_BATCH) {
+  const batch = hourlyDistributionForConvex.slice(i, i + HOURLY_BATCH);
+  runConvexMutation('mutations:batchInsertHourlyDistribution', { data: batch });
+  console.log(`✅ hourlyDistribution: lote ${Math.floor(i / HOURLY_BATCH) + 1} (${batch.length} registros)`);
+}
 
-// ========== ACTUALIZAR ARCHIVO DE CONTROL ==========
+// Actualizar processingControl
+runConvexMutation('mutations:initProcessingControl', {
+  key: 'lastProcessedDay',
+  lastCompleteDay: lastDay2026,
+  lastProcessedTimestamp: new Date().toISOString(),
+  year: 2026,
+  month: 1,
+});
+console.log(`✅ processingControl actualizado (último día: ${lastDay2026})`);
+
+// ========== ACTUALIZAR ARCHIVO DE CONTROL LOCAL (opcional, para scripts legacy) ==========
 const controlPath = path.join(__dirname, '../data/lastProcessedDay.json');
 const lastProcessedData = {
   lastCompleteDay: lastDay2026,
@@ -252,4 +270,4 @@ fs.writeFileSync(controlPath, JSON.stringify(lastProcessedData, null, 2), 'utf8'
 console.log(`✅ Archivo de control actualizado: data/lastProcessedDay.json`);
 console.log(`   Último día completo procesado: ${lastDay2026}`);
 
-console.log(`\n🎉 ¡Proceso completado! El dashboard está actualizado.`);
+console.log(`\n🎉 ¡Proceso completado! Datos actualizados en Convex.`);

@@ -1,20 +1,39 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, Clock, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 
-// Helper para formatear día del mes
-const formatDayMonth = (day: number, month: string = 'Enero'): string => {
-  return `${day} de ${month}`;
+interface NotesSectionProps {
+  month?: number;
+  monthName?: string;
+}
+
+const ACCENT_STYLES: Record<string, { bg: string; border: string; badge: string; text: string }> = {
+  violet: {
+    bg: 'bg-violet-500/15',
+    border: 'border-violet-500/30',
+    badge: 'bg-violet-500/30 text-violet-400',
+    text: 'text-violet-400',
+  },
+  emerald: {
+    bg: 'bg-emerald-500/15',
+    border: 'border-emerald-500/30',
+    badge: 'bg-emerald-500/30 text-emerald-400',
+    text: 'text-emerald-400',
+  },
+  cyan: {
+    bg: 'bg-cyan-500/15',
+    border: 'border-cyan-500/30',
+    badge: 'bg-cyan-500/30 text-cyan-400',
+    text: 'text-cyan-400',
+  },
 };
 
-export const NotesSection = () => {
-  // Obtener datos desde Convex
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
-  const intradayData = useQuery(api.queries.getIntradayData);
+export const NotesSection = ({ month = 1, monthName = 'Enero' }: NotesSectionProps) => {
+  const notes = useQuery(api.queries.getAnalysisNotes);
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
-  // Si está cargando
-  if (lastAvailableDay === undefined) {
+  if (notes === undefined || lastAvailableDay === undefined) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -29,8 +48,13 @@ export const NotesSection = () => {
     );
   }
 
-  // Obtener la hora de la última extracción
-  const lastExtractionTime = intradayData?.lastExtraction || "actualización automática";
+  const interpolateContent = (content: string): string => {
+    return content
+      .replace(/\{lastAvailableDay\}/g, String(lastAvailableDay))
+      .replace(/\{monthName\}/g, monthName);
+  };
+
+  const getDisplayContent = (content: string): string => interpolateContent(content);
 
   return (
     <motion.div
@@ -43,60 +67,32 @@ export const NotesSection = () => {
         <AlertTriangle size={18} className="text-amber-400" />
         Notas Importantes para el Análisis
       </h3>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Note 1 - 2025 MIT */}
-        <div className="bg-violet-500/15 border border-violet-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <div className="bg-violet-500/30 p-2 rounded-lg shrink-0">
-              <span className="text-sm font-bold text-violet-400">2025</span>
+        {notes.map((note) => {
+          const styles = ACCENT_STYLES[note.accentColor] ?? ACCENT_STYLES.cyan;
+          return (
+            <div
+              key={note.id}
+              className={`${styles.bg} border ${styles.border} rounded-xl p-4`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`${styles.badge} p-2 rounded-lg shrink-0`}>
+                  {note.yearLabel ? (
+                    <span className={`text-sm font-bold ${styles.text}`}>{note.yearLabel}</span>
+                  ) : (
+                    <CheckCircle size={16} className={styles.text} />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-slate-200 leading-relaxed">
+                    {getDisplayContent(note.content)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-200 leading-relaxed">
-                El año 2025 fue afectado por{' '}
-                <span className="text-red-400 font-semibold">problemas de rechazos</span>{' '}
-                en el proceso de pagos MIT. Se migró a EVO{' '}
-                <span className="text-amber-400 font-semibold">4 días antes del fin de mes</span>.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Note 2 - 2026 Defect */}
-        <div className="bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <div className="bg-emerald-500/30 p-2 rounded-lg shrink-0">
-              <span className="text-sm font-bold text-emerald-400">2026</span>
-            </div>
-            <div>
-              <p className="text-sm text-slate-200 leading-relaxed">
-                Un defecto causó que aproximadamente{' '}
-                <span className="text-amber-400 font-semibold">30% de los pagos</span>{' '}
-                del Sábado 17, Domingo 18 y Lunes 19 se procesaron el{' '}
-                <span className="text-cyan-400 font-semibold">Martes 20</span>, inflando ese día.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Note 3 - Data Cutoff */}
-        <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <div className="bg-amber-500/30 p-2 rounded-lg shrink-0">
-              <Clock size={16} className="text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-200 leading-relaxed">
-                Los datos del 2026 se actualizan{' '}
-                <span className="text-amber-400 font-semibold">automáticamente cada 5 minutos</span>.
-                Último día completo: {formatDayMonth(lastAvailableDay)}.
-                {intradayData && (
-                  <> Intradía actualizado a las <span className="text-cyan-400 font-semibold">{lastExtractionTime}</span>.</>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </motion.div>
   );

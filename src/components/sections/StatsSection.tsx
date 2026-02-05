@@ -58,11 +58,15 @@ function normalizePeriod(
   return { sum, days };
 }
 
-export const StatsSection = () => {
+interface StatsSectionProps {
+  month?: number;
+}
+
+export const StatsSection = ({ month = 1 }: StatsSectionProps) => {
   // Obtener datos desde Convex
-  const weekdayWeekendStats = useQuery(api.queries.getWeekdayWeekendStats);
-  const periodStats = useQuery(api.queries.getPeriodStats);
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  const weekdayWeekendStats = useQuery(api.queries.getWeekdayWeekendStats, { month });
+  const periodStats = useQuery(api.queries.getPeriodStats, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
   const years: YearType[] = ['2024', '2025', '2026'];
 

@@ -132,13 +132,14 @@ export const seedAllData = mutation({
       if (rows.length > 0) console.log(`   🗑️ ${name}: ${rows.length} registros eliminados.`);
     }
 
-    // 1. Insertar datos diarios (días 1-25 para los 3 años)
-    console.log("📊 Insertando datos diarios (días 1-25)...");
+    // 1. Insertar datos diarios (días 1-25 para los 3 años, mes 1 = Enero)
+    console.log("📊 Insertando datos diarios (días 1-25, Enero)...");
     for (const row of historicalData) {
       for (const year of [2024, 2025, 2026] as const) {
         const yearKey = year.toString() as "2024" | "2025" | "2026";
         await ctx.db.insert("dailyData", {
           year,
+          month: 1,
           day: row.day,
           events: row[yearKey],
           isComplete: true,
@@ -149,29 +150,30 @@ export const seedAllData = mutation({
     // 2. Insertar datos completos días 26-31 para 2024 y 2025
     console.log("📊 Insertando datos completos (días 26-31) para 2024 y 2025...");
     for (let day = 26; day <= 31; day++) {
-      // 2024
       await ctx.db.insert("dailyData", {
         year: 2024,
+        month: 1,
         day,
         events: historicalDataFull2024[day],
         isComplete: true,
       });
-      // 2025
       await ctx.db.insert("dailyData", {
         year: 2025,
+        month: 1,
         day,
         events: historicalDataFull2025[day],
         isComplete: true,
       });
     }
 
-    // 3. Insertar distribución horaria - Weekday
+    // 3. Insertar distribución horaria - Weekday (mes 1 = Enero)
     console.log("⏰ Insertando distribución horaria (días de semana)...");
     for (const row of hourlyDistributionWeekday) {
       for (const year of [2024, 2025, 2026] as const) {
         const yearKey = year.toString() as "2024" | "2025" | "2026";
         await ctx.db.insert("hourlyDistribution", {
           year,
+          month: 1,
           dayType: "weekday",
           hour: row.hour,
           events: row[yearKey],
@@ -186,6 +188,7 @@ export const seedAllData = mutation({
         const yearKey = year.toString() as "2024" | "2025" | "2026";
         await ctx.db.insert("hourlyDistribution", {
           year,
+          month: 1,
           dayType: "weekend",
           hour: row.hour,
           events: row[yearKey],
@@ -218,57 +221,8 @@ export const seedAllData = mutation({
   },
 });
 
-// Mutation para limpiar todos los datos (útil para re-seed)
-export const clearAllData = mutation({
-  handler: async (ctx) => {
-    console.log("🗑️ Limpiando todos los datos...");
-
-    // Limpiar dailyData
-    const dailyData = await ctx.db.query("dailyData").collect();
-    for (const item of dailyData) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar hourlyDistribution
-    const hourlyDistribution = await ctx.db.query("hourlyDistribution").collect();
-    for (const item of hourlyDistribution) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar intradayData
-    const intradayData = await ctx.db.query("intradayData").collect();
-    for (const item of intradayData) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar intradayMeta
-    const intradayMeta = await ctx.db.query("intradayMeta").collect();
-    for (const item of intradayMeta) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar processingControl
-    const processingControl = await ctx.db.query("processingControl").collect();
-    for (const item of processingControl) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar extractionLog
-    const extractionLog = await ctx.db.query("extractionLog").collect();
-    for (const item of extractionLog) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Limpiar monthlyData (histórico anual)
-    const monthlyData = await ctx.db.query("monthlyData").collect();
-    for (const item of monthlyData) {
-      await ctx.db.delete(item._id);
-    }
-
-    console.log("✅ Datos limpiados!");
-    return { success: true };
-  },
-});
+// Para limpiar todos los datos: npm run convex:clear
+// (usa convex import --replace, método recomendado por Convex)
 
 // Helper para verificar si ya hay datos en la base de datos
 export const checkIfSeeded = mutation({
@@ -391,6 +345,55 @@ export const seedAnnualMonthlyData = mutation({
 
     console.log(`✅ monthlyData: ${args.data.length} registros insertados.`);
     return { recordsInserted: args.data.length };
+  },
+});
+
+// Seed de notas de análisis (contextuales para el dashboard)
+export const seedAnalysisNotes = mutation({
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("analysisNotes").collect();
+    for (const doc of existing) {
+      await ctx.db.delete(doc._id);
+    }
+
+    const notes = [
+      {
+        id: "2025-mit",
+        yearLabel: "2025",
+        content:
+          "El año 2025 fue afectado por problemas de rechazos en el proceso de pagos MIT. Se migró a EVO 4 días antes del fin de mes.",
+        accentColor: "violet",
+        order: 1,
+      },
+      {
+        id: "2026-defect",
+        yearLabel: "2026",
+        content:
+          "Un defecto causó que aproximadamente 30% de los pagos del Sábado 17, Domingo 18 y Lunes 19 se procesaron el Martes 20, inflando ese día.",
+        accentColor: "emerald",
+        order: 2,
+      },
+      {
+        id: "cierre-mes",
+        yearLabel: "",
+        content: "Los datos de {monthName} 2026 son finales. Mes cerrado con {lastAvailableDay} días analizados.",
+        accentColor: "cyan",
+        order: 3,
+      },
+    ];
+
+    for (const { id, yearLabel, content, accentColor, order } of notes) {
+      await ctx.db.insert("analysisNotes", {
+        id,
+        yearLabel,
+        content,
+        accentColor,
+        order,
+      });
+    }
+
+    console.log(`✅ analysisNotes: ${notes.length} registros insertados.`);
+    return { recordsInserted: notes.length };
   },
 });
 

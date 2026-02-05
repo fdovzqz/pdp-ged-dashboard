@@ -33,8 +33,11 @@ type AnnualMonthlyRow = {
   monthName: string;
   "2024": number;
   "2025": number;
+  "2026": number;
   difference: number;
   growthRate: number;
+  difference2026?: number;
+  growthRate2026?: number;
 };
 
 type AnnualAccumulatedRow = {
@@ -42,8 +45,10 @@ type AnnualAccumulatedRow = {
   monthName: string;
   "2024": number;
   "2025": number;
+  "2026": number;
   accumulated2024: number;
   accumulated2025: number;
+  accumulated2026: number;
 };
 
 // Tooltip personalizado - definido fuera del componente para evitar recreación en cada render
@@ -55,9 +60,12 @@ const AnnualCustomTooltip = ({ active, payload, label }: {
   if (active && payload && payload.length) {
     const value2024 = payload.find(p => p.name === '2024')?.value || 0;
     const value2025 = payload.find(p => p.name === '2025')?.value || 0;
+    const value2026 = payload.find(p => p.name === '2026')?.value || 0;
     const diff = value2025 - value2024;
     const growthPct = value2024 > 0 ? ((value2025 - value2024) / value2024 * 100).toFixed(1) : '0';
-    
+    const diff2026 = value2026 - value2025;
+    const growthPct2026 = value2025 > 0 ? ((value2026 - value2025) / value2025 * 100).toFixed(1) : '0';
+
     return (
       <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-xl">
         <p className="text-white font-semibold mb-3">{label}</p>
@@ -70,17 +78,21 @@ const AnnualCustomTooltip = ({ active, payload, label }: {
             <span className="text-violet-400 text-sm">2025:</span>
             <span className="text-white font-medium">{value2025.toLocaleString()}</span>
           </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-emerald-400 text-sm">2026:</span>
+            <span className="text-white font-medium">{value2026.toLocaleString()}</span>
+          </div>
           <div className="pt-2 border-t border-slate-600/50">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-400 text-sm">Diferencia:</span>
+              <span className="text-slate-400 text-sm">2024→2025:</span>
               <span className={`font-medium ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {diff >= 0 ? '+' : ''}{diff.toLocaleString()}
+                {diff >= 0 ? '+' : ''}{diff.toLocaleString()} ({Number(growthPct) >= 0 ? '+' : ''}{growthPct}%)
               </span>
             </div>
             <div className="flex items-center justify-between gap-4 mt-1">
-              <span className="text-slate-400 text-sm">Cambio:</span>
-              <span className={`font-medium ${Number(growthPct) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {Number(growthPct) >= 0 ? '+' : ''}{growthPct}%
+              <span className="text-slate-400 text-sm">2025→2026:</span>
+              <span className={`font-medium ${diff2026 >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {diff2026 >= 0 ? '+' : ''}{diff2026.toLocaleString()} ({Number(growthPct2026) >= 0 ? '+' : ''}{growthPct2026}%)
               </span>
             </div>
           </div>
@@ -119,6 +131,7 @@ export const AnnualComparisonSection = () => {
         fullName: m.monthName,
         '2024': m['2024'],
         '2025': m['2025'],
+        '2026': m['2026'],
         difference: m.difference,
         growthRate: m.growthRate,
       }));
@@ -128,6 +141,7 @@ export const AnnualComparisonSection = () => {
       fullName: m.monthName,
       '2024': m.accumulated2024,
       '2025': m.accumulated2025,
+      '2026': m.accumulated2026,
       difference: m.accumulated2025 - m.accumulated2024,
     }));
   }, [viewMode, monthlyData, monthlyAccumulated]);
@@ -143,6 +157,9 @@ export const AnnualComparisonSection = () => {
 
   const dailyAvg2024 = Math.round(dailyAverages['2024'].sum / dailyAverages['2024'].days);
   const dailyAvg2025 = Math.round(dailyAverages['2025'].sum / dailyAverages['2025'].days);
+  const dailyAvg2026 = dailyAverages['2026'].days > 0
+    ? Math.round(dailyAverages['2026'].sum / dailyAverages['2026'].days)
+    : 0;
 
   return (
     <motion.div
@@ -156,7 +173,7 @@ export const AnnualComparisonSection = () => {
         <div className="flex items-center gap-2">
           <BarChart3 size={20} className="text-violet-400" />
           <h3 className="text-xl font-bold text-white font-display">
-            Análisis Anual 2024 vs 2025
+            Análisis Anual 2024 vs 2025 vs 2026
           </h3>
         </div>
         
@@ -186,7 +203,7 @@ export const AnnualComparisonSection = () => {
       </div>
 
       {/* Annual Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {/* 2024 Total */}
         <div
           className="relative overflow-hidden rounded-2xl p-5"
@@ -249,6 +266,37 @@ export const AnnualComparisonSection = () => {
           </div>
         </div>
 
+        {/* 2026 Total (Enero) */}
+        <div
+          className="relative overflow-hidden rounded-2xl p-5"
+          style={{
+            background: `linear-gradient(135deg, ${ANNUAL_YEAR_COLORS['2026']}15, ${ANNUAL_YEAR_COLORS['2026']}05)`,
+            border: `1px solid ${ANNUAL_YEAR_COLORS['2026']}40`,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className="text-sm font-bold px-3 py-1 rounded-full"
+              style={{ backgroundColor: `${ANNUAL_YEAR_COLORS['2026']}30`, color: ANNUAL_YEAR_COLORS['2026'] }}
+            >
+              2026
+            </span>
+            <Calendar size={16} style={{ color: ANNUAL_YEAR_COLORS['2026'] }} />
+          </div>
+          <p className="text-3xl font-bold text-white mb-1">
+            {totals['2026'].toLocaleString()}
+          </p>
+          <p className="text-sm text-slate-400">pagos totales a la fecha</p>
+          <div className="mt-3 pt-3 border-t border-slate-700/50">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-slate-400">Prom. diario</span>
+              <span className="font-semibold text-white">
+                {dailyAvg2026.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Growth */}
         <div className="relative overflow-hidden rounded-2xl p-5 bg-linear-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/30">
           <div className="flex items-center justify-between mb-3">
@@ -261,15 +309,15 @@ export const AnnualComparisonSection = () => {
               <TrendingDown size={16} className="text-red-400" />
             )}
           </div>
-          <p className={`text-3xl font-bold mb-1 ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <p className={`text-2xl font-bold mb-1 ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
           </p>
-          <p className="text-sm text-slate-400">año vs año</p>
-          <div className="mt-3 pt-3 border-t border-slate-700/50">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Diferencia</span>
-              <span className={`font-semibold ${growth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {growth.absolute >= 0 ? '+' : ''}{growth.absolute.toLocaleString()}
+          <p className="text-xs text-slate-400">2024→2025</p>
+          <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-1">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">2025→2026</span>
+              <span className={`font-semibold ${Number(growth.percentage2026) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {Number(growth.percentage2026) >= 0 ? '+' : ''}{growth.percentage2026}%
               </span>
             </div>
           </div>
@@ -279,21 +327,21 @@ export const AnnualComparisonSection = () => {
         <div className="relative overflow-hidden rounded-2xl p-5 bg-linear-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/30">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-bold px-3 py-1 rounded-full bg-cyan-500/30 text-cyan-400">
-              Mejor Mes 2025
+              {stats.maxMonth2026 ? 'Mejor Mes 2026' : 'Mejor Mes 2025'}
             </span>
             <Layers size={16} className="text-cyan-400" />
           </div>
           <p className="text-3xl font-bold text-white mb-1">
-            {stats.maxMonth2025.monthName}
+            {stats.maxMonth2026?.monthName ?? stats.maxMonth2025.monthName}
           </p>
           <p className="text-sm text-slate-400">
-            {stats.maxMonth2025['2025'].toLocaleString()} pagos
+            {(stats.maxMonth2026?.['2026'] ?? stats.maxMonth2025['2025']).toLocaleString()} pagos
           </p>
           <div className="mt-3 pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">vs 2024</span>
-              <span className={`font-semibold ${stats.maxMonth2025.growthRate >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {stats.maxMonth2025.growthRate >= 0 ? '+' : ''}{stats.maxMonth2025.growthRate.toFixed(1)}%
+              <span className="text-slate-400">vs 2025</span>
+              <span className={`font-semibold ${(stats.maxMonth2026?.growthRate2026 ?? stats.maxMonth2025.growthRate) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {(stats.maxMonth2026?.growthRate2026 ?? stats.maxMonth2025.growthRate) >= 0 ? '+' : ''}{(stats.maxMonth2026?.growthRate2026 ?? stats.maxMonth2025.growthRate).toFixed(1)}%
               </span>
             </div>
           </div>
@@ -316,6 +364,7 @@ export const AnnualComparisonSection = () => {
                 <Legend />
                 <Bar dataKey="2024" fill={ANNUAL_YEAR_COLORS['2024']} radius={[4, 4, 0, 0]} name="2024" />
                 <Bar dataKey="2025" fill={ANNUAL_YEAR_COLORS['2025']} radius={[4, 4, 0, 0]} name="2025" />
+                <Bar dataKey="2026" fill={ANNUAL_YEAR_COLORS['2026']} radius={[4, 4, 0, 0]} name="2026" />
               </BarChart>
             ) : (
               <AreaChart data={chartData}>
@@ -327,6 +376,10 @@ export const AnnualComparisonSection = () => {
                   <linearGradient id="gradient2025" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={ANNUAL_YEAR_COLORS['2025']} stopOpacity={0.3} />
                     <stop offset="95%" stopColor={ANNUAL_YEAR_COLORS['2025']} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradient2026" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={ANNUAL_YEAR_COLORS['2026']} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={ANNUAL_YEAR_COLORS['2026']} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -350,6 +403,14 @@ export const AnnualComparisonSection = () => {
                   strokeWidth={2}
                   name="2025"
                 />
+                <Area 
+                  type="monotone" 
+                  dataKey="2026" 
+                  stroke={ANNUAL_YEAR_COLORS['2026']} 
+                  fill="url(#gradient2026)" 
+                  strokeWidth={2}
+                  name="2026"
+                />
               </AreaChart>
             )}
           </ResponsiveContainer>
@@ -366,8 +427,9 @@ export const AnnualComparisonSection = () => {
                 <th className="text-left py-2 px-3">Mes</th>
                 <th className="text-right py-2 px-3">2024</th>
                 <th className="text-right py-2 px-3">2025</th>
-                <th className="text-right py-2 px-3">Diferencia</th>
-                <th className="text-right py-2 px-3">Cambio</th>
+                <th className="text-right py-2 px-3">2026</th>
+                <th className="text-right py-2 px-3">2024→2025</th>
+                <th className="text-right py-2 px-3">2025→2026</th>
               </tr>
             </thead>
             <tbody>
@@ -376,38 +438,32 @@ export const AnnualComparisonSection = () => {
                   <td className="py-2 px-3 text-white font-medium">{month.monthName}</td>
                   <td className="py-2 px-3 text-right text-pink-400">{month['2024'].toLocaleString()}</td>
                   <td className="py-2 px-3 text-right text-violet-400">{month['2025'].toLocaleString()}</td>
+                  <td className="py-2 px-3 text-right text-emerald-400">{month['2026'].toLocaleString()}</td>
                   <td className={`py-2 px-3 text-right ${month.difference >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {month.difference >= 0 ? '+' : ''}{month.difference.toLocaleString()}
+                    <span className="inline-flex items-center gap-1">
+                      {month.growthRate >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                      {month.growthRate >= 0 ? '+' : ''}{month.growthRate.toFixed(1)}%
+                    </span>
                   </td>
                   <td className="py-2 px-3 text-right">
-                    <span className={`inline-flex items-center gap-1 ${month.growthRate >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {month.growthRate >= 0 ? (
-                        <ArrowUpRight size={14} />
-                      ) : (
-                        <ArrowDownRight size={14} />
-                      )}
-                      {month.growthRate >= 0 ? '+' : ''}{month.growthRate.toFixed(1)}%
+                    <span className={`inline-flex items-center gap-1 ${(month.growthRate2026 ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {(month.growthRate2026 ?? 0) >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                      {(month.growthRate2026 ?? 0) >= 0 ? '+' : ''}{(month.growthRate2026 ?? 0).toFixed(1)}%
                     </span>
                   </td>
                 </tr>
               ))}
               {/* Total row */}
               <tr className="bg-slate-700/40 font-semibold">
-                <td className="py-3 px-3 text-white">Total Anual</td>
+                <td className="py-3 px-3 text-white">Total</td>
                 <td className="py-3 px-3 text-right text-pink-400">{totals['2024'].toLocaleString()}</td>
                 <td className="py-3 px-3 text-right text-violet-400">{totals['2025'].toLocaleString()}</td>
-                <td className={`py-3 px-3 text-right ${growth.absolute >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {growth.absolute >= 0 ? '+' : ''}{growth.absolute.toLocaleString()}
+                <td className="py-3 px-3 text-right text-emerald-400">{totals['2026'].toLocaleString()}</td>
+                <td className={`py-3 px-3 text-right ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
                 </td>
-                <td className="py-3 px-3 text-right">
-                  <span className={`inline-flex items-center gap-1 ${Number(growth.percentage) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {Number(growth.percentage) >= 0 ? (
-                      <ArrowUpRight size={14} />
-                    ) : (
-                      <ArrowDownRight size={14} />
-                    )}
-                    {Number(growth.percentage) >= 0 ? '+' : ''}{growth.percentage}%
-                  </span>
+                <td className={`py-3 px-3 text-right ${Number(growth.percentage2026) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(growth.percentage2026) >= 0 ? '+' : ''}{growth.percentage2026}%
                 </td>
               </tr>
             </tbody>
@@ -422,9 +478,11 @@ export const AnnualComparisonSection = () => {
           {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map((quarter, idx) => {
             const val2024 = quarterly['2024'][quarter];
             const val2025 = quarterly['2025'][quarter];
+            const val2026 = quarterly['2026'][quarter];
             const growth = val2024 > 0 ? ((val2025 - val2024) / val2024 * 100).toFixed(1) : '0';
+            const growth2026 = val2025 > 0 ? ((val2026 - val2025) / val2025 * 100).toFixed(1) : '0';
             const quarterLabels = ['Ene-Mar', 'Abr-Jun', 'Jul-Sep', 'Oct-Dic'];
-            
+
             return (
               <div
                 key={quarter}
@@ -443,9 +501,16 @@ export const AnnualComparisonSection = () => {
                     <span className="text-violet-400">2025:</span>
                     <span className="text-white">{val2025.toLocaleString()}</span>
                   </div>
-                  <div className="pt-2 border-t border-slate-600/50">
-                    <div className={`text-center font-semibold ${Number(growth) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {Number(growth) >= 0 ? '+' : ''}{growth}%
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-400">2026:</span>
+                    <span className="text-white">{val2026.toLocaleString()}</span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-600/50 space-y-0.5">
+                    <div className={`text-center text-xs font-semibold ${Number(growth) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      2024→2025: {Number(growth) >= 0 ? '+' : ''}{growth}%
+                    </div>
+                    <div className={`text-center text-xs font-semibold ${Number(growth2026) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      2025→2026: {Number(growth2026) >= 0 ? '+' : ''}{growth2026}%
                     </div>
                   </div>
                 </div>

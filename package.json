@@ -16,8 +16,16 @@
     "convex:seed-annual:prod": "node scripts/seedAnnualToConvex.js --prod",
     "convex:seed-intraday": "convex run seedData:seedIntradayData",
     "convex:seed-intraday:prod": "convex run seedData:seedIntradayData --prod",
-    "convex:clear": "convex run seedData:clearAllData",
-    "validate-annual": "npx tsx scripts/validateAnnualConvex.ts"
+    "convex:seed:notes": "convex run seedData:seedAnalysisNotes",
+    "convex:seed:notes:prod": "convex run seedData:seedAnalysisNotes --prod",
+    "convex:clear": "node scripts/clearConvexTables.js",
+    "convex:clear:prod": "node scripts/clearConvexTables.js --prod",
+    "convex:full-reset": "node scripts/fullResetAndReextract.js",
+    "convex:full-reset:prod": "node scripts/fullResetAndReextract.js --prod",
+    "convex:cancel-reextract": "convex run mutations:cancelReextract",
+    "convex:validate-daily": "convex run cloudwatch:runDailyValidationFromCloudWatch",
+    "validate-annual": "npx tsx scripts/validateAnnualConvex.ts",
+    "generate-hourly": "node scripts/generateHourlyByDay.js"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.975.0",

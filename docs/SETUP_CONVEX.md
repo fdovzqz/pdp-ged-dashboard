@@ -87,7 +87,7 @@ npx convex env list
 ### Limpiar y re-seed
 Si necesitas reiniciar los datos:
 ```bash
-npx convex run seedData:clearAllData
+npm run convex:clear
 npx convex run seedData:seedAllData
 node scripts/seedAnnualToConvex.js
 # Intradía (día 26 de prueba; o usa cloudwatch:manualFetch si tienes AWS):
@@ -95,12 +95,12 @@ npx convex run seedData:seedIntradayData
 ```
 
 ### Recuperar producción tras datos duplicados
-Si los números en prod aparecen duplicados (p. ej. por haber ejecutado `seedAllData` varias veces sin limpiar), haz un reset completo y re-seed. **Nota:** `clearAllData` también borra `intradayData` e `intradayMeta`; tras el seed hay que repoblar intradía (seed o CloudWatch).
+Si los números en prod aparecen duplicados (p. ej. por haber ejecutado `seedAllData` varias veces sin limpiar), haz un reset completo y re-seed. **Nota:** `convex:clear` también borra `intradayData` e `intradayMeta`; tras el seed hay que repoblar intradía (seed o CloudWatch).
 
 **Producción:**
 ```bash
 # 1. Limpiar todas las tablas
-npx convex run seedData:clearAllData --prod
+npm run convex:clear:prod
 
 # 2. Seed de datos base (diarios, distribución horaria, processingControl)
 npx convex run seedData:seedAllData --prod
@@ -115,18 +115,35 @@ npx convex run seedData:seedIntradayData --prod
 
 A partir de ahora `seedAllData` **borra antes de insertar** las tablas que escribe, así que volver a ejecutarlo no duplicará datos.
 
+### Reset completo + Re-extracción desde CloudWatch
+Para borrar todo y re-extraer desde CloudWatch (rawHourlyData como fuente única):
+
+1. **Pausa el cron** durante el proceso
+2. Limpia tablas
+3. Re-extrae desde CloudWatch y reconstruye agregados
+4. **El watermark se define según lo descargado de CloudWatch**
+5. Reactiva el cron
+
+```bash
+# Dev
+npm run convex:full-reset
+
+# Producción
+npm run convex:full-reset:prod
+```
+
 ### Alinear dev y prod
 Para que dev tenga los mismos datos que prod (dailyData, monthlyData, intradayData, etc.):
 
 **Dev (sin --prod):**
 ```bash
-npx convex run seedData:clearAllData
+npm run convex:clear
 npx convex run seedData:seedAllData
 node scripts/seedAnnualToConvex.js
 npx convex run seedData:seedIntradayData
 ```
 
-**Prod:** usa los mismos comandos con `--prod` en `convex run` y `node scripts/seedAnnualToConvex.js --prod`.
+**Prod:** usa `npm run convex:clear:prod` para limpiar, y `--prod` en `convex run` y `node scripts/seedAnnualToConvex.js --prod`.
 
 ## Estructura de Tablas
 
@@ -137,6 +154,7 @@ npx convex run seedData:seedIntradayData
 - `intradayMeta` - Metadatos de última extracción
 - `processingControl` - Control del último día procesado
 - `extractionLog` - Log de extracciones para monitoreo
+- `systemFlags` - Flags de sistema (p. ej. `cronPaused`); no se borra en clear
 
 ## Cifras de Control (Checkpoint 26 Enero 2026, 14:41 MX)
 

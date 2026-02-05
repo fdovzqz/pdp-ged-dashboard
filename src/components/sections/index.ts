@@ -5,4 +5,5 @@ export { StatsSection } from './StatsSection';
 export { AccumulatedSection } from './AccumulatedSection';
 export { AnnualComparisonSection } from './AnnualComparisonSection';
 export { IntradaySection } from './IntradaySection';
+export { DayDetailModal } from './DayDetailModal';
 export { Footer } from './Footer';

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp, Activity, Award, Info, Loader2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
@@ -6,75 +6,55 @@ import { api } from '../../convex/_generated/api';
 
 // Components
 import { KPICard } from '../components/ui';
-import { 
-  HistoricalChart, 
-  ForecastChart,
+import {
+  HistoricalChart,
   HourlyChart,
-  HeatmapChart 
+  HeatmapChart,
 } from '../components/charts';
-import { 
-  NotesSection, 
-  InsightsSection, 
+import {
+  NotesSection,
+  InsightsSection,
   AccumulatedSection,
   StatsSection,
-  IntradaySection
+  DayDetailModal,
 } from '../components/sections';
 
 // Hooks
 import { useToggleState } from '../hooks';
 
 // Types
-import type { ForecastType, YearType } from '../types';
-
-// Helper para formatear fecha
-const formatDayMonth = (day: number, month: string = 'Enero'): string => {
-  return `${day} de ${month}`;
-};
+import type { YearType } from '../types';
 
 export const JanuaryDashboard = () => {
-  // State using custom hooks
   const [activeYears, toggleYear] = useToggleState<YearType>(['2024', '2025', '2026']);
-  const [activeForecast, toggleForecast] = useToggleState<ForecastType>(['probable']);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
-  // Convex queries
-  const totals = useQuery(api.queries.getTotals);
-  const dailyAverages = useQuery(api.queries.getDailyAverages);
-  const growthMetrics = useQuery(api.queries.getGrowthMetrics);
-  const historicalMax = useQuery(api.queries.getHistoricalMax);
-  const intradayData = useQuery(api.queries.getIntradayData);
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  // Convex queries (mes 1 = Enero)
+  const totals = useQuery(api.queries.getTotals, { month: 1 });
+  const dailyAverages = useQuery(api.queries.getDailyAverages, { month: 1 });
+  const growthMetrics = useQuery(api.queries.getGrowthMetrics, { month: 1 });
+  const historicalMax = useQuery(api.queries.getHistoricalMax, { month: 1 });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month: 1 });
 
-  // Datos calculados
-  const intradayTotal = intradayData?.statistics?.currentTotal ?? 0;
-
-  // Memoized KPI data
+  // Memoized KPI data (mes completo - sin intradía)
   const kpiData = useMemo(() => {
     if (!totals || !dailyAverages || !growthMetrics || !historicalMax) {
       return null;
     }
 
-    // Total 2026 = días completos + intradía actual
-    const totalWithIntraday = totals['2026'] + intradayTotal;
-    // Calcular crecimiento actualizado vs 2025
-    const growthVs2025WithIntraday = totals['2025'] > 0
-      ? (((totalWithIntraday / totals['2025']) - 1) * 100).toFixed(1)
-      : '0.0';
-    
-    const currentDay = lastAvailableDay ?? 25;
-    
+    const currentDay = lastAvailableDay ?? 31;
+
     return {
-      totalEvents: totalWithIntraday.toLocaleString(),
-      totalEventsSubtitle: intradayTotal > 0 
-        ? `YTD al ${formatDayMonth(currentDay)} + intradía` 
-        : `YTD al ${formatDayMonth(currentDay)}`,
+      totalEvents: totals['2026'].toLocaleString(),
+      totalEventsSubtitle: `Enero completo (días 1-${currentDay})`,
       biannualGrowth: `+${growthMetrics.growth24vs26}%`,
       dailyAverage: dailyAverages['2026'].toLocaleString(),
       prevDailyAverage: dailyAverages['2025'].toLocaleString(),
-      growthVs2025: intradayTotal > 0 ? `+${growthVs2025WithIntraday}%` : `+${growthMetrics.growth25vs26}%`,
+      growthVs2025: `+${growthMetrics.growth25vs26}%`,
       maxValue: historicalMax.value.toLocaleString(),
       maxDate: `${historicalMax.day} de Enero ${historicalMax.year}`,
     };
-  }, [totals, dailyAverages, growthMetrics, historicalMax, intradayTotal, lastAvailableDay]);
+  }, [totals, dailyAverages, growthMetrics, historicalMax, lastAvailableDay]);
 
   // Loading state
   if (!kpiData) {
@@ -94,14 +74,9 @@ export const JanuaryDashboard = () => {
       <div className="flex items-center gap-3 mb-6 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 backdrop-blur-sm">
         <Info className="text-emerald-400" size={24} />
         <div>
-          <h2 className="text-lg font-bold text-white">Análisis Táctico: Enero 2026</h2>
+          <h2 className="text-lg font-bold text-white">Análisis Completo: Enero 2026</h2>
           <p className="text-sm text-slate-400">
-            Seguimiento diario del mes de mayor recaudación. Comparativa vs. Enero 2024 y 2025.
-            {intradayData?.lastExtraction && (
-              <span className="ml-2 text-emerald-400">
-                · Última actualización: {intradayData.lastExtraction}
-              </span>
-            )}
+            Mes cerrado. Comparativa histórica 2024-2025-2026. Haz clic en una celda del mapa de calor para ver el detalle e intradía del día.
           </p>
         </div>
       </div>
@@ -151,9 +126,6 @@ export const JanuaryDashboard = () => {
         />
       </motion.div>
 
-      {/* Intraday Section - Solo se muestra si hay datos del día actual */}
-      <IntradaySection />
-
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <HistoricalChart
@@ -178,7 +150,7 @@ export const JanuaryDashboard = () => {
           activeYears={activeYears}
           onToggleYear={toggleYear}
         />
-        <HeatmapChart year="2026" />
+        <HeatmapChart year="2026" onDaySelect={setSelectedDay} />
       </div>
 
       {/* Notes Section */}
@@ -186,20 +158,13 @@ export const JanuaryDashboard = () => {
         <NotesSection />
       </div>
 
-      {/* Forecast Section */}
-      <div>
-        <ForecastChart
-          activeForecast={activeForecast}
-          onToggleForecast={toggleForecast}
-          activeYears={activeYears}
-          onToggleYear={toggleYear}
-        />
-      </div>
-
       {/* Insights Section */}
       <div>
         <InsightsSection />
       </div>
+
+      {/* Modal de detalle por día */}
+      <DayDetailModal day={selectedDay} onClose={() => setSelectedDay(null)} />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import './index.css';
 // Lazy load pages for better initial bundle size
 const JanuaryDashboard = lazy(() => import('./pages/JanuaryDashboard').then(m => ({ default: m.JanuaryDashboard })));
 const AnnualDashboard = lazy(() => import('./pages/AnnualDashboard').then(m => ({ default: m.AnnualDashboard })));
+const CurrentMonthDashboard = lazy(() => import('./pages/CurrentMonthDashboard').then(m => ({ default: m.CurrentMonthDashboard })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -35,6 +36,11 @@ const App = () => {
           <Route path="annual" element={
             <Suspense fallback={<PageLoader />}>
               <AnnualDashboard />
+            </Suspense>
+          } />
+          <Route path="current-month" element={
+            <Suspense fallback={<PageLoader />}>
+              <CurrentMonthDashboard />
             </Suspense>
           } />
         </Route>

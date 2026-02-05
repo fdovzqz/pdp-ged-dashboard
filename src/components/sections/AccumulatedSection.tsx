@@ -10,13 +10,20 @@ const formatDayMonth = (day: number, month: string = 'Enero'): string => {
   return `${day} de ${month}`;
 };
 
-export const AccumulatedSection = () => {
+interface AccumulatedSectionProps {
+  month?: number;
+  monthName?: string;
+}
+
+export const AccumulatedSection = ({ month = 1, monthName = 'Enero' }: AccumulatedSectionProps) => {
   // Obtener datos desde Convex
-  const historicalData = useQuery(api.queries.getHistoricalData);
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
-  // Usar totales hasta el día actual para comparación justa entre años
-  const totals = useQuery(api.queries.getTotalsUpToDay, 
-    lastAvailableDay !== undefined ? { maxDay: lastAvailableDay } : "skip"
+  const historicalData = useQuery(api.queries.getHistoricalData, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
+  const totals = useQuery(
+    api.queries.getTotalsUpToDay,
+    lastAvailableDay !== undefined
+      ? { maxDay: lastAvailableDay, month }
+      : "skip"
   );
 
   // Calculate accumulated data for each day
@@ -91,7 +98,7 @@ export const AccumulatedSection = () => {
       <div className="flex items-center gap-2 mb-6">
         <BarChart3 size={20} className="text-emerald-400" />
         <h3 className="text-xl font-bold text-white font-display">
-          Acumulado al Día {formatDayMonth(lastAvailableDay)}
+          Acumulado al Día {formatDayMonth(lastAvailableDay, monthName)}
         </h3>
       </div>
 

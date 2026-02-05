@@ -59,6 +59,13 @@ export interface HourlyData {
   '2026': number;
 }
 
+/** Datos intradía por hora (usado por fetchCloudWatch para generar JSON) */
+export interface IntradayHourData {
+  hour: number;
+  events: number;
+  cumulative: number;
+}
+
 export interface TooltipPayload {
   color: string;
   name: string;

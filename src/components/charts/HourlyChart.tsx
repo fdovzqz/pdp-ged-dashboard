@@ -18,12 +18,14 @@ import { YEAR_COLORS, type YearType } from '../../types';
 interface HourlyChartProps {
   activeYears: YearType[];
   onToggleYear: (year: YearType) => void;
+  month?: number;
+  monthName?: string;
 }
 
-export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear }: HourlyChartProps) {
+export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear, month = 1, monthName = 'Enero' }: HourlyChartProps) {
   // Obtener datos de distribución horaria desde Convex
-  const hourlyDistribution = useQuery(api.queries.getHourlyDistribution, {});
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  const hourlyDistribution = useQuery(api.queries.getHourlyDistribution, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
   // Loading state
   if (hourlyDistribution === undefined || lastAvailableDay === undefined) {
@@ -58,7 +60,7 @@ export const HourlyChart = memo(function HourlyChart({ activeYears, onToggleYear
             Distribución por Hora del Día
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Promedio diario de pagos por hora · Días 1-{lastAvailableDay} de Enero
+            Promedio diario de pagos por hora · Días 1-{lastAvailableDay} de {monthName}
           </p>
         </div>
         <div className="flex flex-wrap gap-1 sm:gap-2">

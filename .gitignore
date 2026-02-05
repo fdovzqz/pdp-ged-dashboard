@@ -31,3 +31,6 @@ dist-ssr
 # Note: data/lastProcessedDay.json should be committed (it's part of project state)
 # Note: data/today-intraday.json is temporary and can be regenerated, but can be committed for convenience
 .vercel
+
+# Temporal del script clearConvexTables
+empty_clear.jsonl

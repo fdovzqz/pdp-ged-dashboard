@@ -20,14 +20,23 @@ type ViewMode = 'daily' | 'accumulated';
 interface HistoricalChartProps {
   activeYears: YearType[];
   onToggleYear: (year: YearType) => void;
+  onDaySelect?: (day: number) => void;
+  month?: number;
+  monthName?: string;
 }
 
-export const HistoricalChart = memo(function HistoricalChart({ activeYears, onToggleYear }: HistoricalChartProps) {
+export const HistoricalChart = memo(function HistoricalChart({
+  activeYears,
+  onToggleYear,
+  onDaySelect,
+  month = 1,
+  monthName = 'Enero',
+}: HistoricalChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('accumulated');
 
   // Obtener datos históricos desde Convex
-  const rawHistoricalData = useQuery(api.queries.getHistoricalData);
-  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay);
+  const rawHistoricalData = useQuery(api.queries.getHistoricalData, { month });
+  const lastAvailableDay = useQuery(api.queries.getLastAvailableDay, { month });
 
   // Filtrar datos hasta el último día disponible (para comparación justa)
   const historicalData = useMemo(() => {
@@ -91,7 +100,7 @@ export const HistoricalChart = memo(function HistoricalChart({ activeYears, onTo
             Tendencia Histórica Comparativa
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Días 1-{lastAvailableDay} de Enero
+            {viewMode === 'daily' ? 'Pagos diarios' : 'Pagos acumulados'} · Días 1-{lastAvailableDay} de {monthName}
           </p>
         </div>
         
@@ -139,11 +148,35 @@ export const HistoricalChart = memo(function HistoricalChart({ activeYears, onTo
         </div>
       </div>
 
-      <div className="h-[400px] w-full">
+      <div
+        className={`h-[400px] w-full ${onDaySelect ? 'cursor-pointer' : ''}`}
+        role={onDaySelect ? 'button' : undefined}
+        tabIndex={onDaySelect ? 0 : undefined}
+        onKeyDown={
+          onDaySelect
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                }
+              }
+            : undefined
+        }
+      >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+            onClick={
+              onDaySelect
+                ? (data: unknown) => {
+                    const payload = data as { activeTooltipIndex?: number };
+                    const idx = payload?.activeTooltipIndex;
+                    if (typeof idx === 'number' && chartData[idx]) {
+                      onDaySelect(chartData[idx].day);
+                    }
+                  }
+                : undefined
+            }
           >
             <defs>
               <linearGradient id="gradient2026" x1="0" y1="0" x2="0" y2="1">

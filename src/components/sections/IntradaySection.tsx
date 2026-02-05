@@ -26,8 +26,12 @@ const getHoursRemainingFormatted = (hoursRemaining: number): string => {
   return `${hoursRemaining} ${hoursRemaining === 1 ? 'hora' : 'horas'}`;
 };
 
-export const IntradaySection = () => {
-  // Obtener datos intradía desde Convex
+interface IntradaySectionProps {
+  monthName?: string;
+}
+
+export const IntradaySection = ({ monthName = 'Enero' }: IntradaySectionProps) => {
+  // Obtener datos intradía desde Convex (usa fecha actual en México)
   const intradayData = useQuery(api.queries.getIntradayData);
 
   // Extraer datos con valores por defecto para hooks
@@ -152,7 +156,7 @@ export const IntradaySection = () => {
         </div>
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
-            Seguimiento Intradía - Día {currentDay} de Enero
+            Seguimiento Intradía - Día {currentDay} de {monthName}
           </h3>
           <p className="text-sm text-slate-400 mt-1">
             Progreso del día actual vs histórico · {getHoursRemainingFormatted(hoursRemaining)} restantes
